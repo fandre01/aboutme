@@ -1,0 +1,65 @@
+---
+title: "Untitled"
+---
+
+```{r}
+library(mosaic)
+library(tidyverse)
+library(nycflights13)
+```
+
+```{r}
+# Let's explore the data
+head(nycflights13::flights)
+```
+```{r}
+colnames(flights)
+```
+```{r}
+view(flights)
+```
+#Introduction
+
+For most people, the most important part of flying is having a flight that leaves on time. Flight delays are frustrating, and it is often hard to know if they happen by accident or if certain types of flights are more likely to be late. In this report, we look at the nycflights13 data to see if there is a connection between how far a plane travels and how long the flight is delayed. We want to find out if long-distance flights have more or fewer delays than short trips. This will help us understand what passengers can really expect when they book flights of different distances...
+
+#Univariate Analysis
+
+```{r}
+(
+  ggplot(na.omit(flights['dep_delay']), aes(x = dep_delay))
+  +geom_histogram(bins = 50, fill= "steelblue", col = "white" )
+  +xlim(-50, 300)
+  +labs(title = "Distribution of Departure Delays", x = "Delay (minutes)", y = "Count")
+)
+```
+
+
+```{r}
+p <- ggplot(nycflights13::flights, aes(x = distance)) +
+  geom_histogram(bins = 50,col = 'white', fill = "darkorange") +
+  labs(title = "Distribution of Flight Distances", x = "Distance (miles)", y = "Count")
+p
+```
+
+# Bivariate Analysis
+
+
+
+```{r}
+flights %>%
+  mutate(distance_group = cut(distance, breaks = seq(0, 5500, by = 500))) |>
+  filter(!is.na(dep_delay)) |>
+  ggplot(aes(x = distance_group, y = dep_delay)) +
+  # Use outlier.shape = NA to hide the distracting dots
+  geom_boxplot(outlier.shape = NA, fill = "steelblue", alpha = 0.5) +
+  
+  # Add a horizontal line at 0 to show "on-time" baseline
+  
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  coord_cartesian(ylim = c(-20, 50)) + # Zoom in to see the 'normal' experience
+  labs(title = "Departure Delay by Distance Group",
+       subtitle = "Focusing on the typical flight experience (outliers removed)",
+       x = "Distance (miles)", y = "Departure Delay (minutes)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+When we group flights by how far they travel and look at the average delay, we see that the wait time at the airport is about the same for both short and long trips. Many people think that very long flights will have more delays, but our data shows that the 'normal' experience is mostly the same no matter the distance. The very long delays we see in the data are just rare exceptions, not the rule. Most of the time, your risk of a delay does not change based on how far your plane is flying.

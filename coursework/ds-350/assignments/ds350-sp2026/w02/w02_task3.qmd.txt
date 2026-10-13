@@ -1,0 +1,32 @@
+---
+title: "w02_Task3"
+---
+```{r}
+library(gapminder)
+library(ggplot2)
+library(tidyverse)
+```
+```{r}
+view(gapminder)
+```
+
+```{r}
+head(gapminder)
+```
+
+
+```{r, fig.width=15, fig.height=6}
+(
+  ggplot(filter(gapminder, country != "Kuwait") , aes(x = lifeExp, y = gdpPercap, size= pop/100000 , color = continent ))
+  +geom_point(alpha=1)
+  +facet_wrap(~year, nrow = 1)
+  +theme_bw()
+  +scale_x_continuous(breaks = c(40, 60, 80)) +
+   
+  labs(x = "Life Expectancy", y = "GDP per Capita", size = "Population (100k)") 
+  
+)
+```
+
+```
+

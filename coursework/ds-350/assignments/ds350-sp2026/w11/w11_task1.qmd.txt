@@ -1,0 +1,153 @@
+---
+title: "w11_task1"
+author: "Fabrice Andre"
+format: html
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(pander)
+```
+
+```{r, warning=FALSE, message=FALSE}
+restaurant <- read_csv("https://byuistats.github.io/M335/data/chipotle_reduced.csv")
+```
+
+## The two functions from the previous task
+
+These are the same functions I built in the earlier `popularity_by_day` task. Function 1 takes one `popularity_by_day` string and turns it into a tibble with the day and the visit count. Function 2 just calls Function 1 and picks out the day with the most visits (if two days tie, it gives both names back).
+
+```{r}
+get_visits_tibble <- function(day_string) {
+  day_string %>%
+    str_remove_all('[{}"]') %>%
+    str_split(",") %>%
+    unlist() %>%
+    tibble(piece = .) %>%
+    separate(piece, into = c("day", "visits"), sep = ":") %>%
+    mutate(visits = as.integer(visits))
+}
+
+get_most_popular_day <- function(day_string) {
+  get_visits_tibble(day_string) %>%
+    filter(visits == max(visits)) %>%
+    pull(day) %>%
+    str_c(collapse = ", ")
+}
+```
+
+### Function 1 applied with `map()`
+
+```{r}
+chipotle_visits <- restaurant %>%
+  filter(!is.na(popularity_by_day)) %>%
+  select(placekey, popularity_by_day) %>%
+  mutate(day_visits = map(popularity_by_day, get_visits_tibble)) %>%
+  unnest(day_visits) %>%
+  mutate(day = factor(day, levels = c("Monday", "Tuesday", "Wednesday", "Thursday",
+                                       "Friday", "Saturday", "Sunday")))
+```
+
+**What is an observation here?**
+
+After I unnest, each row is one restaurant on one day of the week, with how many visits that one location got that day. Since every restaurant has 7 days, this table ends up with about 7 times more rows than the original data.
+
+### Plot 1 — total visits by day
+
+```{r}
+total_visits_df <- chipotle_visits %>%
+  group_by(day) %>%
+  summarise(total_visits = sum(visits), .groups = "drop")
+
+ggplot(total_visits_df, aes(x = day, y = total_visits)) +
+  geom_col(fill = "#2c3e50", width = 0.7) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "Total Weekly Attendance Across All Chipotle Locations",
+    subtitle = "Friday emerges as the peak volume day for customer traffic",
+    x = "Day of the Week",
+    y = "Aggregate Visits"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    plot.title = element_text(face = "bold"),
+    plot.subtitle = element_text(color = "gray40")
+  )
+```
+
+**Recommendation from this view:** 
+
+Friday has the most total visits out of any day. So if Chipotle just wants to hit the biggest number of customers with one promotion, Friday is the day to pick.
+
+## Function 2 applied with `map_chr()`
+
+```{r}
+chipotle_busiest <- restaurant %>%
+  filter(!is.na(popularity_by_day)) %>%
+  select(placekey, popularity_by_day) %>%
+  mutate(busiest_day = map_chr(popularity_by_day, get_most_popular_day)) %>%
+  separate_rows(busiest_day, sep = ", ") %>%
+  mutate(busiest_day = factor(busiest_day, levels = c("Monday", "Tuesday", "Wednesday",
+                                                        "Thursday", "Friday", "Saturday", "Sunday")))
+```
+
+**What is an observation here?** 
+
+Each row is one restaurant (its `placekey`), and the value just tells me which single day is that restaurant's own busiest day. This table stays close to one row per restaurant  a restaurant only shows up twice if it has a tie for busiest day.
+
+### Plot 2 — number of locations where each day is the busiest
+
+```{r}
+busiest_day_counts <- chipotle_busiest %>%
+  count(busiest_day, name = "num_locations")
+
+ggplot(busiest_day_counts, aes(x = busiest_day, y = num_locations)) +
+  geom_col(fill = "steelblue", width = 0.7) +
+  labs(
+    title = "Which Day Is Each Location's Busiest?",
+    subtitle = "Friday is the single busiest day for the largest share of Chipotle locations",
+    x = "Day of the Week",
+    y = "Number of Locations"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    plot.title = element_text(face = "bold"),
+    plot.subtitle = element_text(color = "gray40")
+  )
+```
+
+**Recommendation from this view:**
+Friday shows up the most as a restaurant's own busiest day, way more than Thursday or Saturday. So a Friday promotion would match what is already the peak day for the most stores, not just the busiest day for the chain as a whole.
+
+## Conclusion
+
+Based on both graphs, Chipotle should run the big promotion on **Friday**. Both graphs point to the same day, so there is no fight between the two ways of looking at "busiest."
+
+Between the two, I trust the store-count graph (Plot 2) more for this decision. The total-visits graph can be pulled up by just a few really busy stores, so a day can look big overall even if it is not really the top day for most locations. The store-count graph instead answers "for how many stores does this day actually matter," and that fits a promotion better, since the promotion has to work store by store, not just for the chain as one big number. Still, both graphs are worth keeping. The total-visits graph shows how big the opportunity is, and the store-count graph shows how many locations actually share in that opportunity.
+
+One more thing worth pointing out: Thursday and Saturday are close behind Friday in both graphs. So if Chipotle ever wants to stretch the promotion past one day, those two are the next best picks, not a weekday like Tuesday, which is low in both graphs.
+
+## Saving the nested dataset for a teammate
+
+My co-worker needs a dataset where each row is one restaurant, with the day/visit breakdown stored inside a list-column, so the nested shape stays in place. `save.image()` would just save my whole R session, not a clean object I can hand off, so I use `saveRDS()` on the actual tibble instead.
+
+```{r}
+chipotle_nested <- restaurant %>%
+  filter(!is.na(popularity_by_day)) %>%
+  select(placekey, popularity_by_day) %>%
+  mutate(day_visits = map(popularity_by_day, get_visits_tibble)) %>%
+  select(placekey, day_visits)
+
+saveRDS(chipotle_nested, "chipotle_nested.rds")
+```
+
+```{r}
+chipotle_nested
+```
+
+
+### AI Use Disclosure
+
+I wrote all the explanations in my own words and then used Grammarly to refine the phrasing, improve clarity, and correct grammatical errors.

@@ -1,0 +1,112 @@
+nmnjkjn---
+title: "Client Report - Weather Delays"
+subtitle: "Unit 3 Task 2"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+import sqlite3
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+# Learn morea about Code Cells: https://quarto.org/docs/reference/cells/cells-jupyter.html
+
+# Include and execute your code here
+df = pd.read_json("https://github.com/byuidatascience/data4missing/raw/master/data-raw/flights_missing/flights_missing.json")
+
+df
+```
+
+
+## QUESTION 1
+
+## Which delay is the worst delay? Build on the analysis you already did regarding Weahter Delay. This time though, instead of comparing one type of delay across multiple airports, we want to compare Weather Delay (an involved calculation that you already did in a previous task) with Carrier Delay and Security Delay (both of which are in the dataset and don’t need fancy calculations like Weather did). Compare the proportion of delay for each of the three categories in a Chart and a Table. Describe your results. 
+
+_ _
+
+```{python}
+df2 = df
+
+df2['total_column'] = (
+    df["num_of_delays_weather"] +
+    (df["num_of_delays_nas"] * np.where(df["month"].isin(['April', 'May', 'June', 'July', 'August']), 0.40, 0.65) +
+    df["num_of_delays_late_aircraft"] * .30)
+)
+df2 = df2.groupby("airport_code").agg(
+  total_number_of_flights_delayed = ("total_column", "mean")
+).reset_index()
+df2
+```
+
+```{python}
+# CARRIER DELAY 
+carrier_delay = df.groupby("airport_code")["num_of_delays_carrier"].sum().reset_index()
+carrier_delay
+```
+
+```{python}
+# SECURITY DELAY
+
+num_of_delays_security = df.groupby("airport_code")["num_of_delays_security"].sum().reset_index()
+
+num_of_delays_security
+```
+
+```{python}
+  delay_compare = df2.merge(carrier_delay, on="airport_code").merge(num_of_delays_security, on="airport_code")
+  delay_compare
+```
+
+```{python}
+#calculate proportions
+delay_compare["total_all"] = delay_compare[
+  ["total_number_of_flights_delayed", "num_of_delays_carrier", "num_of_delays_security"]].sum(axis=1)
+
+delay_compare["weather_prop"] = delay_compare["total_number_of_flights_delayed"] / delay_compare["total_all"]
+delay_compare["carrier_prop"] = delay_compare["num_of_delays_carrier"] / delay_compare["total_all"]
+delay_compare["security_prop"] = delay_compare["num_of_delays_security"] /delay_compare["total_all"]
+
+delay_compare
+
+```
+
+
+## Question 2
+
+__Create another chart that shows the proportion of delays for each reason (Weather, Carrier, and Security) across all 7 airports. Describe your results__  
+
+```{python}
+# Overall totals
+delay_compare[["weather_delay_total", "carrier_delay_total", "security_delay_total"]].sum().plot(kind='bar', title="Total Delays by Type")
+
+# Proportion by airport
+delay_compare[["airport_code", "weather_prop", "carrier_prop", "security_prop"]].set_index("airport_code").plot(kind='bar', stacked=True, title="Proportion of Delay Types by Airport")
+
+```

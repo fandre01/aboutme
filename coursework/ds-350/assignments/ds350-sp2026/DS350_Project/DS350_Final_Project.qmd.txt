@@ -1,0 +1,11 @@
+---
+title: "DS350_Final_Project"
+subtitle: ""
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    embed-resources: true
+    toc: true
+    toc-depth: 3
+---

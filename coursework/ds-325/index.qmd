@@ -1,0 +1,10 @@
+---
+title: "DS 325"
+description: "DS 325 coursework archive."
+---
+
+## About this coursework
+
+I found the folder `Documents/DS325_SP2026`, but it is currently empty, so there are no assignment files to publish yet.
+
+When the files are available locally, they can be added here as downloadable source work.

@@ -1,0 +1,86 @@
+---
+title: "Client Report - Star Wars for Dummies"
+subtitle: "Unit 5 Task 3"
+author: "Fabrice"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd
+import numpy as np
+
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+
+```
+
+
+```{python}
+
+
+LetsPlot.setup_html(isolated_frame=True)
+
+people = pd.DataFrame({
+    "name": [
+        "Joseph", "Maria", "Edmond", "Fay", "Rachel", "George",
+        "Hector", "Wesley", "Silas", "Leslie", "Janet", "Norman"
+    ],
+    "age": [
+        "10-19", "10-19", "20-29", "50-59", "10-19", "40-49",
+        "50-59", "30-39", "60-69", "50-59", "10-19", "20-29"
+    ]
+})
+
+people
+
+```
+
+```{python}
+people[["age_min", "age_max"]] = (
+    people["age"]
+    .str.split("-", expand=True)
+    .astype(int)
+)
+
+people
+
+```
+
+```{python}
+(
+    ggplot(people, aes(x="age_min"))
+    + geom_histogram(
+        binwidth=10,
+        fill="#3944BC",
+        color="white"
+    )
+    + labs(
+        x="age_min",
+        y="Count of Records",
+        title="Histogram of Minimum Age"
+    )
+    + theme_minimal()
+)
+
+```

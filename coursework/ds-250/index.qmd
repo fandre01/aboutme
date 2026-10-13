@@ -1,0 +1,14 @@
+---
+title: "DS 250"
+description: "Data programming coursework, including coding challenges, practice work, and Quarto assignments."
+---
+
+## About this coursework
+
+This folder contains source files found in both `Documents/DS250` and `Documents/DS250 - BYUI`. Files are archived with a `.txt` suffix so Quarto treats them as downloadable source instead of executing homework during the portfolio build.
+
+## Files
+
+The complete archive is available in the [DS 250 assignment folder on GitHub](https://github.com/fandre01/aboutme/tree/main/coursework/ds-250/assignments).
+
+<!-- Optional follow-up: add short descriptions or screenshots for the strongest DS 250 assignments. -->

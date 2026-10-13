@@ -1,0 +1,82 @@
+---
+title: "w04_Task1"
+Autor: Fabrice Andre
+---
+
+```{r}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)   
+```
+
+```{r}
+rds_data <-read_rds("https://github.com/byuistats/data/raw/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.RDS")
+rds_data
+```
+
+```{r}
+#Let's filter the data, to keep only DJIA rows
+Rds <- rds_data %>%
+  filter(variable == "DJIA") %>%
+
+#Extract the correct ending month and the ending year.
+
+mutate(
+  # Strip everything before the dash to keep the ending month 
+  end_chunk = str_replace(contest_period, "^.*-","" ),
+  
+  #Extract just the letters fir the month
+  month_end = str_extract(end_chunk, "[A-Za-z]+"),
+  
+  #Extract the 4 digits at the end for the year
+  
+  year_end = str_extract(end_chunk, "\\d{4}")
+)%>%
+#Keep only the columns we need for pivoting
+select(month_end, year_end, value)
+
+
+saveRDS(Rds, "Rds.rds")
+
+Rds
+```
+
+
+
+```{r}
+# Pivot the clean data into the final format
+Rds_clean <- Rds %>%
+# Let's factor the month column so it sorts from January to December 
+  mutate(month_end = factor(month_end, levels = month.name)) %>%
+
+  #Pivot wide using the year column
+  pivot_wider(
+    names_from = year_end,
+    values_from = value
+    
+  ) %>%
+  #Let's make sure month start from Jan to Dec
+  arrange(month_end) %>%
+  rename(Month = month_end) %>%
+  
+  #Let's try to turn as a DataFrame string to see if we can replace NA to "-"
+  as.data.frame()%>%
+  mutate(Month = as.character(Month))
+  
+  # now let's try to replace Na s to "-"
+Rds_clean[is.na(Rds_clean)] <- "-"
+
+#keep just 12 row
+Rds_clean<- Rds_clean[1:12, ]
+  
+#Rds_clean
+# Hid the row names
+knitr::kable(Rds_clean, align = "lccccccccc")
+
+
+```
+
+
+
+

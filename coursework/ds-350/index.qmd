@@ -1,0 +1,14 @@
+---
+title: "DS 350"
+description: "Statistical computing, data visualization, and analysis coursework from DS 350."
+---
+
+## About this coursework
+
+This folder contains source files from `Documents/DS350_SP2026` and the separate DS 350 project folder. Generated documentation, dependency folders, cached files, and large raw datasets are excluded from the portfolio archive.
+
+## Files
+
+The complete source archive is available in the [DS 350 assignment folder on GitHub](https://github.com/fandre01/aboutme/tree/main/coursework/ds-350/assignments).
+
+<!-- Optional follow-up: add short descriptions or screenshots for the strongest DS 350 assignments. -->

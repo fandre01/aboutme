@@ -1,0 +1,119 @@
+---
+title: "w06_task1"
+author: "Fabrice Andre"
+format:
+  html:
+    keep-md: true
+    toc: true
+    toc-float: true
+    code-fold: true
+    fig-height: 6
+    fig-width: 12
+    fig-align: center
+execute:
+  warning: false
+  message: false
+---
+
+
+```{r}
+library(tidyverse)
+library(pander)
+library(nycflights13)
+library(plotly)
+```
+
+
+```{r}
+data(package = "nycflights13")
+```
+
+```{r}
+#Join the flights and planes tibbles.
+flight <- flights |>
+  left_join(planes, join_by(tailnum))
+flight
+```
+
+
+
+```{r}
+#For each flight, calculate the age of the plane that was used.
+age <- flight |>
+  mutate(age = year.x - year.y) |>
+  filter(!is.na(year.x), !is.na(year.y)) |>
+select(carrier, age, dep_delay, air_time)
+age 
+```
+
+```{r}
+#Create a chart that looks at the distribution of departure delays by age (or age group).
+#Do you notice any patterns?
+#Create a new column that groups age into 0-10, 11-20, 21-30, and >30
+
+flight_age_group <- age |>
+  mutate(
+    age_group = case_when(
+      age <= 10 ~ "0-10",
+      age <= 20 ~ "11-20",
+      age <= 30 ~ "21-30",
+      TRUE ~ ">30"
+    )
+  ) |>
+select(carrier, age, dep_delay, age_group, air_time)
+head(flight_age_group)
+```
+```{r, warning=FALSE}
+chart =(
+  ggplot(flight_age_group, aes(y = dep_delay, x = age_group, fill = age_group))
+  + geom_boxplot(outlier.shape = NA)
+  +coord_cartesian(ylim = c(-10, 60))
+  + geom_hline(yintercept = 0.3, color = "red", linetype = "dashed")
+  +labs(
+    title = "Distribution of Departure Delays by Plane Age Group",
+    x = "Plane Age (Years)",
+    y = "Departure Delay (Minutes)"
+  )
+  +theme_minimal()
+)
+
+chart
+```
+#Chart 1- Analysis
+Interestingly, the distribution of departure delays remains highly consistent across all plane age groups. The median delay is near zero for all categories, and the spread of the data (IQR) doesn't significantly widen for older aircraft. This suggests that a plane's age is not a strong predictor of departure delays.
+
+```{r}
+carrier_name <- flight_age_group |>
+  left_join(airlines, join_by(carrier))
+
+chart2 = (
+  ggplot(carrier_name, aes(y =age, x = name, fill = name))
+  + geom_boxplot(outlier.shape = NA)
+  +coord_cartesian(ylim = c(0, 40))
+  + theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+  + labs(title = "Distribution of Plane Age by Carrier", x = "Carrier Full Name", y = "Plane Age (Years)")
+  
+)
+chart2
+
+```
+#Chart 2 Analysis
+Looking at the distribution of plane ages across different carriers, there is a stark contrast in fleet management. Airlines like American Airlines and Envoy Air consistently operate older fleets with medians well above 20 years. Conversely, carriers like JetBlue, Hawaiian, and Virgin America feature significantly younger fleets, with median plane ages under 10 years.
+
+
+```{r, warning=FALSE}
+chart3 =(
+  ggplot(flight_age_group, aes(x = age_group, y = air_time, fill = age_group))
+  + geom_boxplot(outlier.shape = NA)
+) +
+  labs(
+    y= "Amount of time spent in the air (In Min)", 
+    x = "Age group",
+    title = "Time spend in the air by age group"
+  )
+chart3
+```
+#Chart 3 Analysis
+This chart shows that airplanes that there ages are between 21-30, the spend more time in the air. I think there are a few questions needs to answer in order to know why they spend more time on the air. 
+
+

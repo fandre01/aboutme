@@ -1,0 +1,81 @@
+---
+title: "Estimating_Means&Variability"
+format: html
+---
+
+```{r}
+# Let's import the library we need
+
+library(mosaic)
+library(tidyverse)
+```
+
+```{r}
+#View(airquality)
+```
+
+
+```{r}
+ggplot(airquality, aes(x = Temp)) +
+  geom_histogram(binwidth = 5, color = "steelblue", fill = "skyblue" ) +
+  labs(
+    title =  "Maximum daily in degrees Fahrenheit at La Guardia Airport, NY, USA",
+    x = "Temperature in degrees F",
+    y = "Number of Days in Temperature Range"
+  )
+```
+
+```{r}
+favstats(airquality$Temp)
+```
+
+
+
+```{r}
+# Let's build the Boxplot
+ggplot(airquality, aes(x = factor(Month), y = Temp )) +
+ geom_boxplot( fill = "skyblue", color = "steelblue") +
+  labs(
+    title = "Maximum daily temperature in degrees Fahrenheit at La Guardia Airport, NY, USA",
+    x = "Month of the Year",
+    y = "Temperature in degrees F"
+  )
+```
+
+
+
+```{r}
+favstats(airquality$Temp ~ airquality$Month)
+```
+
+
+
+```{r}
+# Let's build the scaderplot
+
+ggplot(airquality, aes( x = Wind, y = Temp)) +
+  geom_point(color = "steelblue") +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "steelblue") +
+theme_bw() +
+  labs(
+    title = "Maximun daily temperature in degrees Fahrenheit at La Guardia Airport May to September 1973",
+    x = "Average wind in miles per hour between 7 AM to 10 AM at LaGuardia Airport",
+    y = "Temperature in degrees F"
+  )
+```
+
+
+```{r}
+mylm <- lm(Temp ~ Wind, data = airquality)
+summary(mylm)
+```
+
+
+```{r}
+summary(lm(disp ~ wt, data = mtcars))$r.squared
+```
+
+```{r}
+21 - predict(lm(mpg ~ wt, data = mtcars), data.frame(wt = 2.7))
+```
+

@@ -1,0 +1,127 @@
+title: "Client Report - Star Wars for Dummies"
+subtitle: "Unit 5 Task 3"
+author: "[STUDENT NAME]"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute:
+  warning: false
+---
+```{python}
+import pandas as pd
+import numpy as np
+from lets_plot import *
+# add the additional libraries you need to import for ML here
+LetsPlot.setup_html(isolated_frame=True)
+```
+# Question 1
+# Clean and format the data so that it can be used in a machine learning model. As you format the data, you should complete each item listed below. In your final report provide an excerpt of the reformatted data with a short description of the changes made.
+_
+a. Create a new column that converts the age ranges to a single number. Drop the age range categorical column
+b. Create a new column that converts the education groupings to a single number. Drop the school categorical column
+c. Create a new column that converts the income ranges to a single number. Drop the income range categorical column
+d. Create your target (also known as “y” or “label”) column to indicate whether a person had a Household Income $50,000 or greater
+e. Encode favorability ratings as a number. Remove the favorability categorical columns.
+f. One-hot encode all remaining categorical columns_
+```{python}
+# import your data here using pandas and the URL
+df = pd.read_csv('https://github.com/fivethirtyeight/data/raw/master/star-wars-survey/StarWars.csv', encoding_errors= "ignore", skiprows=2)
+new_col_names = [
+  "respondant_id", "seen_any", "starwars_fan",
+  #whether seen each movie
+   "seen_ep1", "seen_ep2", "seen_ep3", "seen_ep4", "seen_ep5", "seen_ep6",
+  #ranking each movie
+    "rank_ep1", "rank_ep2", "rank_ep3", "rank_ep4", "rank_ep5", "rank_ep6",
+  #character favorability
+   "fav_han", "fav_luke", "fav_leia", "fav_anakin", "fav_obi", "fav_palpatine", "fav_vader",  "fav_lando", "fav_boba", "fav_c3po", "fav_r2d2", "fav_jarjar", "fav_amidala", "fav_yoda",
+  #random info/EU
+   "who_shot_1st", "EU_familiarity", "EU_fan", "star_trek_fan",
+  #demographic
+  "gender", "age", "income", "educ", "location"
+]
+df.columns = new_col_names
+seen_cols = ["seen_ep1", "seen_ep2", "seen_ep3", "seen_ep4", "seen_ep5", "seen_ep6"]
+df_seen = df[df[seen_cols].notna().any(axis = 1)]
+#filter data to respondents who have seen at least one movie
+df_cleaned =df.dropna(subset = seen_cols, how = "all").reset_index(drop = True)
+df_cleaned.head()
+```
+_a. Create a new column that converts the age ranges to a single number. Drop the age range categorical column_
+```{python}
+# a
+def age_mapping(range):
+  if range =='18-29':
+    return 23.5
+  elif range == '30-44':
+    return 37
+  elif range == '45-60':
+    return 52.5
+  elif range == '>60':
+    return 69
+  else: np.nan
+df_cleaned["age_mid"] = df_cleaned["age"].apply(age_mapping).astype("Float64")
+df_cleaned.head()
+```
+```{python}
+df_cleaned["missing_age"] = df_cleaned["age_mid"].isna().astype(int)
+df_cleaned["age_mid"] = df_cleaned["age_mid"].fillna(0) #replace with average
+#drop age range categorical data
+df_cleaned = df_cleaned.drop(columns= "age")
+```
+b. Create a new column that converts the education groupings to a single number. Drop the school categorical column
+```{python}
+df_cleaned['edu_level'] = 0 #default is 0
+df_cleaned.loc[df_cleaned['educ'] == 'Less than high school degree', 'edu_level'] = 10
+df_cleaned.loc[df_cleaned['educ'] == 'High school degree', 'edu_level'] = 12
+df_cleaned.loc[df_cleaned['educ'] == 'Some college or Associate degree', 'edu_level'] = 14
+df_cleaned.loc[df_cleaned['educ'] == 'Bachelor degree', 'edu_level'] = 16
+df_cleaned.loc[df_cleaned['educ'] == 'Graduate degree', 'edu_level'] = 18
+#drop educ data
+df_cleaned = df_cleaned.drop(columns= "educ")
+```
+c. Create a new column that converts the income ranges to a single number. Drop the income range categorical column
+```{python}
+def income_mapping(range):
+  if range =='$0 - $24,999':
+    return 12500
+  elif range == '$25,000 - $49,999':
+    return 37500
+  elif range == '$50,000 - $99,999':
+    return 75000
+  elif range == '$100,000 - $149,999':
+    return 125000
+  elif range == '$150,000+':
+    return 150000
+  else: np.nan
+df_cleaned["income_mid"] = df_cleaned["income"].apply(income_mapping).astype("Float64")
+df_cleaned["missing_income"] = df_cleaned["income_mid"].isna().astype(int)
+df_cleaned["income_mid"] = df_cleaned["income_mid"].fillna(0) #replace with average
+#drop income range categorical data
+df_cleaned = df_cleaned.drop(columns= "income")
+df_cleaned.head()
+```
+d. Create your target (also known as “y” or “label”) column to indicate whether a person had a Household Income $50,000 or greater
+```{python}
+df_cleaned['target'] = (df_cleaned['income_mid'] >= 50000).astype(int)
+```
+e. Encode favorability ratings as a number. Remove the favorability categorical columns.
+```{python}
+```
+f. One-hot encode all remaining categorical columns_
+```{python}
+```

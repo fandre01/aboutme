@@ -1,0 +1,137 @@
+---
+title: "w08_task2"
+format: html
+---
+
+```{r, warning=FALSE}
+library(USAboundaries)
+library(ggrepel)
+library(tidyverse)
+library(sf)
+
+
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+# Unzip the data
+wells <- unzip("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/Wells.zip", exdir = "C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/Wells")
+
+
+
+#read the data
+wells_data <- st_read("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/Wells/Wells.shp")
+
+#head(wells_data)
+```
+```{r}
+#colnames(wells_data)
+```
+
+
+```{r}
+dams <- unzip("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/Idaho_Dams.zip", exdir = "C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/Idaho_Dams")
+
+
+idaho_dams <- st_read("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/Idaho_Dams/Dam_Safety.shp")
+
+#idaho_dams
+```
+```{r}
+#view(idaho_dams)
+```
+
+```{r}
+#colnames(idaho_dams)
+```
+
+
+
+```{r, warning=FALSE}
+water <- unzip("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/water.zip", exdir = "C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/water")
+
+water_data <- st_read("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/water/hyd250.shp")
+#head(water_data)
+```
+
+```{r}
+shp <- unzip("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/shp.zip", exdir ="C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/shp" )
+
+shp_data <- st_read("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w08/shp/County-AK-HI-Moved-USA-Map.shp")
+#shp_data
+```
+
+### Filter the data
+ 
+```{r}
+# Filter wells_data
+clean_wells <- wells_data %>%
+  filter(Production > 5000)
+```
+
+
+```{r}
+# Filter dams
+clean_dams <- idaho_dams %>%
+  filter(SurfaceAre > 50) 
+```
+
+```{r}
+#Filter the water data
+clean_water <- water_data %>%
+  filter(FEAT_NAME == "Snake River" | FEAT_NAME == "Henrys Fork")
+```
+
+```{r}
+# Filter State for just Idaho
+
+clean_shp <- shp_data %>%
+  filter(StateName == "Idaho")
+```
+
+
+
+
+```{r}
+# let's Change the projection so that Idaho is not tilted when plotted
+
+idaho_crs <- 6448
+shp_proj <- st_transform(clean_shp, crs = idaho_crs)
+
+wells_proj <- st_transform(clean_wells, crs = idaho_crs)
+
+dams_proj <- st_transform(clean_dams, crs = idaho_crs)
+
+water_proj <- st_transform(clean_water, crs = idaho_crs)
+
+
+
+```
+
+
+
+
+
+```{r}
+# Let's make the graph
+
+ggplot() +
+  
+  geom_sf(data = shp_proj, fill = "darkgreen", color = "white") +
+  
+  # Rivers layer 
+  geom_sf(data = water_proj, color = "blue", size = 1) +
+  
+  # Wells and Dams 
+  geom_sf(data = wells_proj, color = "yellow", size = 2) +
+  geom_sf(data = dams_proj, color = "red", size = 2) +
+   theme_bw()+
+  labs(
+    title = "Idaho Water Systems Map"
+  )
+```
+```{r}
+# Save the image
+ggsave("Idaho_map.png", width = 15, height = 10)
+```
+

@@ -1,0 +1,389 @@
+---
+title: "DS350 Final Project: Crime Rates & STEM Opportunities"
+author: "Fabrice Andre"
+format:
+  html:
+    page-layout: full # Opens the layout to full screen width
+    theme: flatly
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-summary: "Show Code"
+    embed-resources: true
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(readr)
+library(tidyverse)
+library(sf)
+library(USAboundaries)
+library(readxl)
+library(tidycensus)
+library(USAboundaries)
+library(plotly)
+```
+
+### Project Overview
+When graduating STEM students at BYU-Idaho get ready to enter the workforce, choosing where to live is about more than just finding a job. For those who have a family or plan to start one, it is about finding the right balance between job growth, safety, and affordable housing.
+
+This project looks at county-level data across California, Idaho, and Utah to help BYU-Idaho graduates make a better decision on where to move. To do this, I combined data from different government agencies and real estate estimates:
+
+STEM Job Opportunities: Employment data from the Bureau of Labor Statistics (BLS) focused on technical and scientific fields.
+
+Crime Rates: FBI violent crime reports normalized per 100,000 people using Census Bureau population data.
+
+Housing Affordability: Monthly average home prices from the Zillow Home Value Index (ZHVI).
+
+**Note on Data Limitations:** It is important to know that these datasets have some gaps—like missing city police reports in the FBI crime file, hidden job numbers in small counties for privacy, and Zillow using a private statistical model. I point out these details in each section so we can make an accurate comparison.
+
+Overall, this study helps show the trade-offs between big tech areas with expensive housing and more affordable, family-friendly communities—helping you find the best spot to launch your career and raise a family.
+
+```{r , warning=FALSE, message=FALSE}
+# Using unzip() to have access to the data
+
+df <- unzip("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/Table10.zip", exdir = "C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/Table10")
+df
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+
+library(readxl)
+
+crime <- read_xlsx(
+  "CIUS_Table_10_Offenses_Known_to_Law_Enforcement_by_State_by_Metropolitan_and_Nonmetropolitan_Counties_2024.xlsx", 
+  skip = 4
+)
+```
+
+### Crime Data Background
+
+To evaluate community safety, I used county-level violent crime data from the FBI’s Crime in the U.S. (CIUS) records, normalized per 100,000 residents using U.S. Census Bureau population estimates.
+
+Important Data Limitation: It is crucial to note that this dataset only includes reports submitted by county sheriff departments and county police, not individual city police departments. Because city police statistics are missing, counties with major urban centers—such as Los Angeles County in California, Salt Lake County in Utah, and Ada County in Idaho (home to Boise)—have their real crime numbers undercounted here. As a result, the actual violent crime rates in these urban areas are likely higher than what these figures show, so these numbers should be evaluated alongside local city police reports when making a decision.
+
+
+```{r, warning=FALSE, message=FALSE}
+crime_us <- crime %>% 
+  filter(!str_detect(State, "[0-9]"))
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+# Let's filter the data for those 3 States that we are intersted in
+
+state_crime <- crime_us %>% 
+  filter(State %in% c("UTAH", "IDAHO", "CALIFORNIA"))
+```
+
+
+```{r}
+#colnames(state_crime)
+```
+```{r, warning=FALSE, message=FALSE}
+# Let use some more accurate names
+states_crime <- state_crime %>% 
+  rename(
+    Violent = "Violent\r\ncrime",
+    Murder = "Murder and\r\nnonnegligent\r\nmanslaughter",
+    Aggravated ="Aggravated\r\nassault" ,
+    Larceny ="Larceny-\r\ntheft",
+    Property_Crime = "Property\r\ncrime" ,
+    Vehicle_Theft ="Motor\r\nvehicle\r\ntheft",
+    Arson = "Arson1",
+    Metro_Status = "Metropolitan/Nonmetropolitan"
+  )
+```
+
+```{r}
+#head(states_crime)
+```
+
+
+```{r}
+# get the counties and the 3 states
+
+county_population <- get_acs(geography = "county", state =  c("ID", "UT", "CA"), variables = "B01003_001", year = 2022)
+#head(county_population)
+```
+
+
+```{r}
+# Let's clean our county_population data to match the crime data
+
+acs_population <- county_population %>% 
+  separate(NAME, into = c("County", "State"), sep = ",") %>% 
+  mutate(County = str_remove(County, "County")) %>% 
+  mutate(County = str_trim(County), State = str_to_upper(str_trim(State)))
+#head(acs_population)
+```
+```{r, warning=FALSE, message=FALSE}
+# Let's do some more cleaning
+
+acs_populations <- acs_population %>% 
+  rename(Population = "estimate") %>% 
+  select(!variable)
+  #head(acs_populations)
+```
+
+
+
+
+
+```{r, warning=FALSE, message=FALSE}
+## Let's join those 2 dataset
+join_data <- states_crime %>% 
+  inner_join(acs_populations, join_by(County, State))
+#head(join_data)
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+# Note: This rate reflects crimes reported by sheriff/county police only, not city police departments.
+crime_rate <- join_data %>% 
+  mutate(
+    Violent_Rate = (Violent / Population) * 100000
+  )
+```
+
+```{r}
+three_States <- us_counties(states = c("IDAHO", "CALIFORNIA", "UTAH"))
+```
+
+```{r, warning=FALSE, message=FALSE}
+#st_crs(three_States)
+```
+
+```{r, warning=FALSE, message=FALSE}
+final_data <- three_States %>% 
+  left_join(crime_rate, join_by(geoid == GEOID))
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+Crime <- ggplot() + 
+  geom_sf(data = final_data, aes(fill = Violent_Rate), color = "white", size = 0.1) + 
+  facet_wrap(~ state_name, scales = "free") +  
+  labs(
+    title = "Violent Crime Rate per 100K",
+    caption = "Gray means No data available"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),    
+    axis.ticks = element_blank(),   
+    panel.grid = element_blank()    
+  ) +
+  scale_fill_gradientn(
+    colors = c("salmon", "red", "darkred"),
+    na.value = "grey80"             
+  )
+
+ggplotly(Crime)
+```
+
+
+
+### Graph Explanation
+
+This map shows violent crime rates per 100,000 residents across counties in California, Idaho, and Utah. Darker red indicates higher crime rates, while lighter salmon-colored areas reflect lower rates.
+
+The gray counties represent missing data—they do not mean zero crime or that an area is completely safe. These 18 counties were left out because their agencies did not report complete data for 2024.
+
+**Data Limitation:** Additionally, because this FBI dataset only includes reports from county sheriff offices and not local city police departments, true crime numbers in major metropolitan areas are likely higher than what is displayed here.
+
+
+### STEM Job Background
+
+To measure STEM job opportunities, I used the Quarterly Census of Employment and Wages (QCEW) from the U.S. Bureau of Labor Statistics (BLS). This dataset uses unemployment insurance tax records from employers, so it covers over 95% of all U.S. jobs instead of relying on sample surveys.
+
+For this project, I used NAICS Code 54 (Professional, Scientific, and Technical Services) to represent STEM jobs. While this captures major technical fields like engineering, IT, and scientific research, it is not a perfect 1-to-1 match. It misses STEM roles in industries like manufacturing or healthcare, and it includes some non-STEM fields like legal and accounting services. Also, federal privacy rules hide (suppress) data in smaller counties with very few employers, which explains why some counties show up as missing data on our map.
+
+```{r, warning=FALSE, message=FALSE}
+job <- read_csv("https://data.bls.gov/cew/data/api/2024/a/industry/54.csv")
+#view(job)
+```
+
+```{r, warning=FALSE, message=FALSE}
+jobs <- job %>% 
+  filter(agglvl_code == 74) %>% 
+  filter(area_fips %in% acs_populations$GEOID ) %>% 
+  group_by(area_fips) %>% 
+  summarise(Total_Employment = sum(annual_avg_emplvl))
+
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+combine_data <- final_data %>% 
+  left_join(jobs, join_by(geoid == area_fips))
+```
+
+```{r, warning=FALSE, message=FALSE}
+Job <- ggplot() + 
+  geom_sf(data = combine_data, aes(fill = Total_Employment), color = "white", size = 0.1) +
+  facet_wrap(~ state_name, scales = "free") +  
+  labs(
+    title = "STEM Job Opportunity",
+    fill = "Total Employment"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),    
+    axis.ticks = element_blank(),   
+    panel.grid = element_blank()    
+  ) +
+  scale_fill_distiller(palette = "Blues", labels = scales::comma, trans = "log10", direction = 1, na.value = "grey80")
+
+ggplotly(Job)
+```
+
+### Interpretation of the graph
+
+This map shows the distribution of STEM jobs across counties in California, Idaho, and Utah. Dark blue means a higher concentration of STEM jobs, while lighter blue indicates fewer job opportunities. The gray counties represent areas that either have zero STEM jobs or where the official employment numbers were suppressed by the BLS for privacy reasons—it is not possible to separate the two based on this dataset alone.
+
+
+
+
+
+### Housing Data Background
+
+To look at housing trends, I used the Zillow Home Value Index (ZHVI) from Zillow Research. Unlike my crime, jobs, and population data—which come directly from government sources like the FBI, BLS, and Census Bureau—this housing data comes from a private company.
+
+The ZHVI is not just a count of homes that were recently sold. Instead, it uses a statistical model to estimate the typical home value (middle 35% to 65% price range) for single-family homes and condos in each county. While this gives us broader coverage than just looking at sold properties, it is important to remember that these numbers are Zillow’s private estimates rather than official government statistics.
+
+```{r, warning=FALSE, message=FALSE}
+library(readr)
+
+# Update this path to match where the file lives on your Windows PC:
+home <- read_csv("~/DS350_SP2026/DS350_S26_Andre_Fabr/DS350_Project/County_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv")
+```
+
+```{r}
+#head(home)
+```
+
+```{r, warning=FALSE, message=FALSE}
+# Using Pivot_longer to reshape the data
+
+homes <- home %>% 
+  filter(State %in% c("CA", "UT", "ID")) %>% 
+  pivot_longer(cols = starts_with("20"),
+               names_to = "Date",
+               values_to = "Home_value") %>% 
+#Convert Date into a actual Data format
+mutate(Date = ymd(Date))
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+# Let's calculate the average of home value
+homes_value_avg <- homes %>% 
+  group_by(State, Date) %>% 
+  summarise(
+    Mean_Home = mean(Home_value, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+```{r, warning=FALSE, message=FALSE}
+houses <- ggplot() + 
+  geom_line(data = homes_value_avg, aes(x = Date, y = Mean_Home, color = State)) +
+  scale_y_continuous(labels = scales::label_dollar()) +
+  labs(
+    title = "Average County House Price per State (2000–2026)",
+    x = "Date",
+    y = "Average County House Price ($)"
+  ) +
+  theme_bw()
+
+ggplotly(houses)
+```
+
+
+
+
+
+
+
+### Graph Explanation
+
+This graph shows how average county home prices in California, Utah, and Idaho changed from 2000 to 2026. California has always had the most expensive houses, while Utah and Idaho stayed lower. All three states saw prices drop during the 2008 housing crash, hitting their lowest point around 2012 before rising again after 2013. Around 2020, prices jumped up fast in every state, especially in Utah and Idaho, before leveling off in recent years.
+
+```{r, warning=FALSE, message=FALSE}
+# Let's filter homes dataset
+home_data <- homes %>% 
+  filter(Date == max(Date, na.rm = TRUE)) %>% 
+  mutate(
+    GEOID = paste0(StateCodeFIPS, MunicipalCodeFIPS)
+  )
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+#head(home_data$GEOID); head(combine_data$geoid)
+```
+
+```{r, warning=FALSE, message=FALSE}
+final_join <- combine_data %>% 
+  left_join(home_data, join_by(geoid == GEOID))
+```
+
+```{r}
+#colnames(final_join)
+```
+
+
+### Scatter Plot show Housing Price vs STEM Job
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(scales) 
+
+ggplot(data = final_join, aes(x = Total_Employment, y = Home_value, color = state_name)) +
+  geom_point( na.rm = TRUE) +
+  scale_x_continuous(
+    trans = "pseudo_log",
+    labels = label_comma(),
+    breaks = c(0, 10, 100, 1000, 10000, 100000),
+    expand = expansion(mult = c(0.05, 0.08)) 
+  ) +
+  scale_y_continuous(labels = label_dollar()) +
+  theme_bw() +
+  labs(
+    title = "Housing Price vs. STEM Employment",
+    x = "Total STEM Employment (Log Scale)",
+    y = "Home Value ($)",
+    color = "State"
+  )
+```
+
+## Graph Explanation
+
+This scatter plot helps graduating BYU-Idaho STEM students evaluate the trade-off between job opportunities and housing affordability when choosing a place to raise a family. While California offers the highest concentration of STEM jobs (often over 10,000 to 100,000 positions per county), home prices are extremely high, usually ranging from $800,000 to over $1.6M, which creates a high financial bar for young families starting out. On the other hand, counties in Utah and Idaho provide a strong sweet spot: they offer solid STEM employment (roughly 100 to 10,000 jobs) while keeping average home values much more manageable, mostly between $300,000 and $600,000. For graduates balancing career growth, low crime, and family budgeting, mid-sized counties in Idaho and Utah offer the best overall balance of tech opportunity without California-level housing costs.
+
+
+### Boxplot
+
+```{r, warning=FALSE, message=FALSE}
+ggplot(data = final_join, aes(x = state_name, y = Violent_Rate, fill = state_name)) +
+  geom_boxplot(na.rm = TRUE) +
+  theme_bw() +
+  labs(
+    title = "Distribution of Violent Crime Rates by State",
+    x = "State",
+    y = "Violent Crime Rate (per 100K)",
+    fill = "State"
+  )
+  
+```
+
+### Graph Explanation
+
+This boxplot shows how violent crime rates vary across counties in California, Idaho, and Utah. Utah has the lowest median crime rate and the smallest overall spread, while California has a higher median rate and several high-crime outlier counties. Idaho sits in the middle with a low overall median, though it also has two notable outlier counties.
+
+**Important Data Limitation:** It is crucial to remember that this crime dataset only includes reports from sheriff and county police, not city police departments. Because major city police reports are missing, the true crime rates in urban counties—especially in metropolitan areas like Los Angeles County, Salt Lake County, and Ada County in Idaho—are likely higher than what is shown here. While Utah and Idaho appear to offer safer choices on average for BYU-Idaho families, these numbers should be evaluated alongside local city crime data before making a final moving decision.
+
+
+

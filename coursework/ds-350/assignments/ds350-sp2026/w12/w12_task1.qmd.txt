@@ -1,0 +1,101 @@
+---
+title: "Popularity by Day"
+author: "Fabrice Andre"
+format: html
+---
+
+## Goal
+
+The column `popularity_by_day` is one long string that holds the visit count for every day of the week, like this:
+
+`{"Monday":94,"Tuesday":76,"Wednesday":89,"Thursday":106,"Friday":130,"Saturday":128,"Sunday":58}`
+
+I need to pull the days and the numbers out of that string and put them into a tibble. Then I build a function that gives me the tibble, and a second function that tells me which day had the most visits.
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+## Let tuning the string into a tibble
+
+First I try it on just one string, the example above, before I turn it into a function.
+
+```{r}
+example_string <- '{"Monday":94,"Tuesday":76,"Wednesday":89,"Thursday":106,"Friday":130,"Saturday":128,"Sunday":58}'
+
+pieces <- example_string %>%
+  str_remove_all('[{}"]') %>%
+  str_split(",") %>%
+  unlist()
+
+pieces
+```
+
+Now every piece looks like `"Monday:94"`. I split each piece one more time on the colon to get the day in one column and the number in the other.
+
+```{r}
+example_tibble <- tibble(piece = pieces) %>%
+  separate(piece, into = c("day", "visits"), sep = ":") %>%
+  mutate(visits = as.integer(visits))
+
+example_tibble
+```
+
+That's exactly what I want, so now I put it into a function.
+
+## Function 1: string to tibble
+
+```{r}
+get_visits_tibble <- function(day_string) {
+  day_string %>%
+    str_remove_all('[{}"]') %>%
+    str_split(",") %>%
+    unlist() %>%
+    tibble(piece = .) %>%
+    separate(piece, into = c("day", "visits"), sep = ":") %>%
+    mutate(visits = as.integer(visits))
+}
+```
+
+## Function 2: most popular day
+
+This one just calls Function 1, then keeps the row(s) with the biggest visits number. If more than one day ties for the top, I glue the names together with a comma.
+
+```{r}
+get_most_popular_day <- function(day_string) {
+  get_visits_tibble(day_string) %>%
+    filter(visits == max(visits)) %>%
+    pull(day) %>%
+    str_c(collapse = ", ")
+}
+```
+
+## Testing on the 3 strings
+
+
+```{r}
+test1 <- '{"Monday":94,"Tuesday":76,"Wednesday":89,"Thursday":106,"Friday":130,"Saturday":128,"Sunday":58}'
+
+get_visits_tibble(test1)
+get_most_popular_day(test1)
+```
+
+**Test 2 — placekey "22c-222@5z5-3rs-hwk"**
+
+```{r}
+test2 <- '{"Monday":18,"Tuesday":16,"Wednesday":14,"Thursday":27,"Friday":26,"Saturday":36,"Sunday":20}'
+
+get_visits_tibble(test2)
+get_most_popular_day(test2)
+```
+
+**Test 3 — placekey "zzw-223@5r8-fqv-xkf"**
+
+```{r}
+test3 <- '{"Monday":0,"Tuesday":0,"Wednesday":1,"Thursday":0,"Friday":0,"Saturday":1,"Sunday":0}'
+
+get_visits_tibble(test3)
+get_most_popular_day(test3)
+```
+
+All three match what was expected: Friday, Saturday, and Wednesday/Saturday tied.

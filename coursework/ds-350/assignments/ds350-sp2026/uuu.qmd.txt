@@ -1,0 +1,59 @@
+---
+title: "Untitled"
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+length(sentences)
+sentences[1:10]
+```
+
+```{r}
+tibble(sentence = sentences[1:4]) |>
+  mutate(count = str_count(str_to_lower(sentence), "the"))
+```
+#OR
+```{r}
+tibble(sentence = sentences[1:4]) |>
+  mutate(count = str_count(sentence, "T|the "))
+```
+
+```{r}
+tibble(sentence = sentences[1:4]) |>
+  mutate(count = str_count(sentence, "T|the(?![:alpha:]) "))
+```
+```{r}
+dat <- readr::read_lines("https://byuistats.github.io/M335/data/randomletters.txt")
+length(dat)
+```
+```{r}
+str(dat)
+  
+```
+```{r}
+dat %>% str_remove_all(pattern = 'e|a') %>% str_length()
+```
+```{r}
+dat %>% str_count(pattern = 'jim')
+```
+```{r}
+dat %>% str_locate_all(pattern =  'aaa')
+```
+```{r}
+dat %>% str_split(pattern = "")%>% unlist()
+```
+```{r}
+dat %>% str_split(pattern = "")%>% unlist() %>%
+  str_c(collapse = "")
+```
+
+```{r}
+month.name
+letters
+mymonths <- str_c(month.name, collapse = "|") %>%
+  
+```
+

@@ -1,0 +1,34 @@
+---
+title: "CareerShield AI"
+description: "A full-stack application that predicts how technology may affect more than 500 careers and presents the results through interactive dashboards."
+date: "2026-10-13"
+categories: [Python, Databricks, PySpark, Machine Learning, Data Visualization, FastAPI, React]
+featured: true
+image: thumbnail.svg
+tools: [Python, Databricks, PySpark, FastAPI, React, scikit-learn]
+---
+
+## The problem
+
+People making career decisions need understandable information about how technology may affect different occupations. CareerShield AI provides a way to explore those predictions across more than 500 careers.
+
+## My approach
+
+I built a full-stack application that processes career data with PySpark on Databricks, trains a predictive model, and presents the results in interactive dashboards. The application uses FastAPI for the backend and React for the user interface.
+
+## The work
+
+The project combined data processing, predictive modeling, and application development. I used Python and scikit-learn for the machine-learning workflow, PySpark and Databricks for processing, and FastAPI and React to make the results available through an interactive application.
+
+## The result
+
+CareerShield AI predicts technology impact across 500+ careers, and the model achieved 94.7% accuracy on the evaluation used for the project.
+
+## What I learned
+
+<!-- TODO: Add what was hardest about connecting the model to the application and what you would improve. -->
+
+## Links
+
+- [View the live CareerShield AI app](https://careershield-ai-2.onrender.com/)
+- Code: <!-- TODO: Add the repository link if you want to show the source code. -->

@@ -1,0 +1,28 @@
+---
+title: "Untitled"
+---
+
+```{r}
+library(tidyverse)
+
+# 1. IMPORT: Loading from a remote source
+spotify_data <- read_csv("https://raw.githubusercontent.com/gabminamedez/spotify-data/master/data.csv")
+
+# 2. WRANGLE: Basic & Grouped
+spotify_clean <- spotify_data %>%
+  # Use mutate to convert milliseconds to minutes
+  mutate(duration_min = duration_ms / 60000) %>%
+  # Use filter to look at modern music (e.g., post-1960)
+  filter(year >= 1960) %>%
+  # Use group_by and summarize to see trends over time
+  group_by(year) %>%
+  summarize(
+    avg_sadness = mean(valence),
+    avg_length = mean(duration_min),
+    song_count = n()
+  )
+```
+```{r}
+view(spotify_data)
+```
+

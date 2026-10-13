@@ -1,0 +1,17 @@
+---
+title: "Untitled"
+---
+```{r, warning=FALSE}
+library(sf)
+library(dplyr)
+library(USAboundaries)
+library(USAboundariesData)
+library(ggplot2)
+library(ggrepel)
+library(leaflet)
+```
+
+```{r}
+states <- us_states() 
+```
+

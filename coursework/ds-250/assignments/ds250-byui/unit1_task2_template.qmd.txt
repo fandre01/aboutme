@@ -1,0 +1,98 @@
+m---
+title: "Client Report - What's in a Name?"
+subtitle: "Unit 1 Task 2"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd
+import numpy as np
+from lets_plot import *
+from plotnine import *
+from mizani.formatters import custom_format  # ✅ Add this line here
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+```{python}
+# Learn morea about Code Cells: https://quarto.org/docs/reference/cells/cells-jupyter.html
+
+# Include and execute your code here
+df = pd.read_csv("https://github.com/byuidatascience/data4names/raw/master/data-raw/names_year/names_year.csv")
+```
+
+## QUESTION 1
+
+<!-- Make sure at least one of your charts includes reference marks!! -->
+
+__How does your name at your birth year compare to its use historically? Your must provide a chart. The years labels on your charts should not include a comma.__ 
+
+_The chart shows how my name, “Andre,” has been used over time. I highlighted my birth year, 2000, with a red dashed line. From the chart, we can see that the name was not very popular around my birth year compared to other years. Overall, the popularity of the name changed over time, going up and down, but my birth year shows it was less common. This helps me understand how my name fits into historical trends._
+
+```{python}
+
+
+# Filter for your name
+my_name = df.query('name == "Andre"')
+
+# Create the chart
+(
+    ggplot(my_name, aes(x='year', y='Total'))
+    + geom_line(color='blue')
+    + geom_vline(xintercept=2000, color='red', linetype='dashed')
+    + scale_x_continuous(limits=[1950, 2020],
+                         labels=custom_format('{:.0f}'))  # removes commas
+    + geom_text(x=2005, y=1900, label="Andre", color='red')
+)
+
+```
+## QUESTION 2
+
+__If you talked to someone named Brittany on the phone, what is your guess of his or her age? What ages would you not guess? Try to justify your answer with whatever statistics knowledge you have. You must provide a chart. The years labels on your charts should not include a comma.__  
+
+_If I talked to someone named Brittany on the phone, I would guess their age is most likely between 25 and 40 years old, because that is when the name Brittany was most popular. I would not guess someone is younger than 15 or older than 50, since very few babies were named Brittany in those years. This conclusion comes from looking at the historical trend of the name’s popularity._
+
+```{python}
+# Q2
+# Filter for "Brittany"
+brittany = df.query('name == "Brittany"')
+popular_year = brittany.loc[brittany['Total'].idxmax(), 'year']
+print(popular_year)
+
+(
+    ggplot(brittany, aes(x='year', y='Total'))
+    + geom_line(color='blue', size=1.2)
+    + geom_vline(xintercept=popular_year, color='red', linetype='dashed')
+    + labs(
+        title='Popularity of the Name "Brittany" Over Time',
+        x='Year',
+        y='Total'
+    )
+    + scale_x_continuous(limits=[1950, 2020],
+                         labels=custom_format('{:.0f}')) 
+    + geom_text(x=2000, y=30090, label="Andre", color='red')
+)
+
+```
+

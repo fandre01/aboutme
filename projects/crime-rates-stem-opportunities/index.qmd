@@ -1,0 +1,33 @@
+---
+title: "Crime Rates and STEM Opportunities"
+description: "An R analysis comparing county-level safety, STEM employment, and housing affordability across California, Idaho, and Utah."
+date: "2026-10-13"
+categories: [R, Data Visualization]
+featured: true
+image: thumbnail.svg
+tools: [R, tidyverse, ggplot2, plotly, sf, readr, readxl, tidycensus]
+---
+
+## The problem
+
+Graduating STEM students deciding where to move need to balance career opportunities, community safety, and housing costs. This project compares those factors across counties in California, Idaho, and Utah.
+
+## My approach
+
+I combined crime data, Census population estimates, Bureau of Labor Statistics employment data, and Zillow housing estimates. I cleaned and joined the datasets in R, calculated violent-crime rates per 100,000 residents, and created maps and charts for comparing counties and states.
+
+## The work
+
+I used tidyverse tools for data cleaning and joins, `tidycensus` for population estimates, `sf` and `USAboundaries` for county maps, and `ggplot2` and `plotly` for visualizations. I also documented important limitations, including missing city-police reports, suppressed employment values, and Zillow's modeled estimates.
+
+## The result
+
+The final analysis compares three states across three decision factors: crime rates, STEM employment, and home values. The visualizations show that California has more STEM employment but much higher housing costs, while Utah and Idaho offer a different balance of employment opportunities, safety, and affordability.
+
+## What I learned
+
+This project taught me how important it is to explain data limitations alongside visual results. A county that appears to have a lower crime rate may have incomplete reporting, and a missing employment value may reflect privacy suppression rather than zero jobs.
+
+## Links
+
+- Source archive: [DS 350 coursework](../../coursework/ds-350/index.qmd)

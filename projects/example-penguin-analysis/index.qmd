@@ -3,7 +3,7 @@ title: "Example: Penguin Body Mass Analysis"
 description: "SAMPLE PROJECT. Replace with your own work. Shows the expected structure."
 date: "2026-01-01"
 categories: [Python, Polars, Data Visualization]
-featured: true
+featured: false
 example: true
 repo: https://github.com/YOUR-USERNAME/YOUR-PROJECT
 tools: [polars, lets-plot]

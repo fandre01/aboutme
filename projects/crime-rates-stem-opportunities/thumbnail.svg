@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Crime Rates and STEM Opportunities thumbnail</title>
+  <desc id="desc">An R analysis illustration comparing safety, jobs, and housing across three states.</desc>
+  <rect width="1200" height="675" fill="#f4f7f5"/>
+  <rect x="0" y="0" width="1200" height="112" fill="#1d5c4a"/>
+  <text x="70" y="70" fill="#ffffff" font-family="Arial, sans-serif" font-size="42" font-weight="700">Crime Rates &amp; STEM Opportunities</text>
+  <text x="75" y="180" fill="#34594e" font-family="Arial, sans-serif" font-size="25">R analysis across California, Idaho, and Utah</text>
+  <g transform="translate(80 235)">
+    <rect x="0" y="0" width="310" height="255" rx="16" fill="#ffffff" stroke="#c5d8d0" stroke-width="3"/>
+    <text x="28" y="46" fill="#1d5c4a" font-family="Arial, sans-serif" font-size="25" font-weight="700">Safety</text>
+    <circle cx="155" cy="135" r="78" fill="#e7f1ed" stroke="#4b9a7e" stroke-width="7"/>
+    <path d="M118 130 l28 28 54-63" fill="none" stroke="#1d5c4a" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g transform="translate(445 235)">
+    <rect x="0" y="0" width="310" height="255" rx="16" fill="#ffffff" stroke="#c5d8d0" stroke-width="3"/>
+    <text x="28" y="46" fill="#1d5c4a" font-family="Arial, sans-serif" font-size="25" font-weight="700">STEM jobs</text>
+    <path d="M48 190 L105 150 L155 172 L225 85 L265 112" fill="none" stroke="#2f7f9f" stroke-width="10"/>
+    <circle cx="225" cy="85" r="12" fill="#2f7f9f"/>
+  </g>
+  <g transform="translate(810 235)">
+    <rect x="0" y="0" width="310" height="255" rx="16" fill="#ffffff" stroke="#c5d8d0" stroke-width="3"/>
+    <text x="28" y="46" fill="#1d5c4a" font-family="Arial, sans-serif" font-size="25" font-weight="700">Housing</text>
+    <rect x="55" y="155" width="42" height="55" fill="#e2a64b"/><rect x="120" y="115" width="42" height="95" fill="#d67b52"/><rect x="185" y="65" width="42" height="145" fill="#b94e55"/>
+    <text x="49" y="235" fill="#56736a" font-family="Arial, sans-serif" font-size="18">CA</text><text x="114" y="235" fill="#56736a" font-family="Arial, sans-serif" font-size="18">UT</text><text x="179" y="235" fill="#56736a" font-family="Arial, sans-serif" font-size="18">ID</text>
+  </g>
+  <text x="75" y="585" fill="#56736a" font-family="Arial, sans-serif" font-size="24">Data cleaning • county maps • interactive visualizations</text>
+</svg>

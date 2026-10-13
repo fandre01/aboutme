@@ -1,0 +1,49 @@
+---
+title: "w03_Task1"
+---
+```{r}
+library(tidyverse)
+library(gapminder)
+```
+```{r}
+colnames(gapminder)
+```
+```{r}
+# Remove Kuwait
+gap_data <- gapminder %>% 
+  filter(country != "Kuwait")
+
+# Weighted average dataset
+continent_weights <- gap_data %>%
+  group_by(continent, year) %>%
+  summarise(
+    gdpPercap = weighted.mean(gdpPercap, pop),
+    # Scale population for the legend to match teacher's "100k"
+    pop_scaled = sum(pop) / 100000, 
+    .groups = "drop"
+  )
+```
+
+```{r, fig.width=15,fig.height=6}
+ggplot(data = gap_data, aes(x = year, y = gdpPercap, color = continent)) +
+  
+  # Use a small size for the country points to match the visual
+  geom_line(aes(group = country)) +
+  geom_point(aes(group = country), size = 0.5) +
+  
+  # We override the data and set color to black manually
+  geom_line(data = continent_weights, color = "black", linewidth = 1) +
+  geom_point(data = continent_weights, color = "black", aes(size = pop_scaled)) +
+  
+  #Formatting to match teacher's image 
+  facet_wrap(~continent, nrow = 1) +
+  theme_bw() +
+  labs(
+    x = "Year",
+    y = "GDP per Capita",
+    size = "Population (100k)"
+  ) 
+  
+```
+
+

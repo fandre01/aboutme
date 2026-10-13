@@ -1,0 +1,127 @@
+---
+title: "Client Report - BYU-Idaho Players and Comparing Teams"
+subtitle: "Unit 2 Task 2"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+import sqlite3
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+# Learn morea about Code Cells: https://quarto.org/docs/reference/cells/cells-jupyter.html
+
+# Include and execute your code here
+sqlite_file = 'lahmansbaseballdb.sqlite'
+# this file must be in the same location as your .qmd or .py file
+con = sqlite3.connect(sqlite_file)
+```
+
+## QUESTION 1
+
+__Write an SQL query that provides playerID, yearID, and batting average for players with at least 1 at bat that year. Sort the table from highest batting average to lowest, and then by playerid alphabetically. Show the top 5 results in your report.__
+
+__This query calculates each player’s batting average for every year by dividing the number of hits (H) by the number of at-bats (AB). The results include only players who had at least one at-bat, and the batting averages are rounded to three decimal places. The table is then sorted by highest batting average first and, in case of a tie, alphabetically by playerID.
+
+The top five players all have a perfect batting average of 1.000, meaning they got a hit in every at-bat they had during that season. However, these results likely come from players who only had one or a few at-bats, so their averages are not based on full-season performance. This query successfully identifies the highest batting averages according to the dataset, but it also shows that setting a higher at-bat requirement would give a more meaningful list of top hitters._
+
+```{python}
+
+q ='''
+    SELECT 
+      playerID,
+      yearID,
+      ROUND(1.0 * H / AB, 3) AS batting_average
+FROM Batting
+WHERE AB > 0
+ORDER BY batting_average DESC, playerID ASC
+LIMIT 5;
+
+'''
+results = pd.read_sql_query(q, con)
+results
+
+```
+
+
+## QUESTION 2
+
+__Use the same query as above, but only include players with at least 10 at bats that year. Print the top 5 results.__  
+
+_This query calculates each player’s overall batting average by summing their hits and at-bats from all seasons. Only players with at least 100 total at-bats are included to make the results meaningful. The output shows the top 5 players with the highest career batting averages, highlighting the most consistent and effective hitters across their careers._
+
+```{python}
+# Include and execute your code here
+q ='''
+  SELECT 
+    playerID,
+    yearID,
+    round(1.0 * H / AB, 3) AS batting_average
+FROM Batting
+WHERE AB >= 10
+ORDER BY batting_average DESC, playerID ASC
+LIMIT 5;
+
+  '''
+results = pd.read_sql_query(q, con)
+results
+
+```
+
+
+## QUESTION 3
+
+__Now calculate the batting average for players over their entire careers (all years combined). Only include players with at least 100 at bats over their entire career, and print the top 5 results.__
+
+_The top 5 players with the highest career batting averages all have at least 100 at-bats. This means we are only looking at players who played enough to make their averages meaningful.
+The results show that these players were very consistent hitters over their careers. The batting average is calculated by dividing total hits by total at-bats, so a higher number shows better hitting performance.
+Overall, this analysis highlights players who not only hit well but also played enough games to prove their skill over time._
+
+```{python}
+
+# Open the connection
+con = sqlite3.connect("lahmansbaseballdb.sqlite")  # replace with your DB file
+
+q = """
+SELECT playerID,
+       SUM(H) * 1.0 / SUM(AB) AS career_batting_average
+FROM Batting
+GROUP BY playerID
+HAVING SUM(AB) >= 100
+ORDER BY career_batting_average DESC
+LIMIT 5;
+"""
+
+
+# Execute query while connection is open
+results = pd.read_sql_query(q, con)
+results
+
+```

@@ -1,0 +1,93 @@
+---
+title: "W05 Task: Visualization for Presentation (OWD)"
+author: "Fabrice Andre"
+format:
+  html:
+    keep-md: true
+    toc: true
+    toc-float: true
+    code-fold: true
+    fig-height: 6
+    fig-width: 12
+    fig-align: center
+execute:
+  warning: false
+  message: false
+---
+
+## Setup
+
+```{r}
+library(tidyverse)
+library(forcats)
+library(readxl)
+
+```
+
+## Load and Clean Data
+
+```{r}
+gdp <- read_csv("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w05/fruit-consumption-vs-gdp-per-capita.csv")
+
+```
+
+```{r}
+clean_gdp <- na.omit(gdp)
+```
+
+
+```{r}
+filter_gdp <- clean_gdp %>%
+  filter(Year== 2023) %>%
+select(Entity, Code, Year, `Fruit supply per person`, `GDP per capita`, `World region according to OWID`)
+```
+
+```{r}
+class <- filter_gdp %>%
+  group_by(`World region according to OWID`) %>%
+  select(Entity, Code, Year, `Fruit supply per person`, `GDP per capita`, `World region according to OWID`)
+```
+
+
+```{r}
+region_colors <- c(
+  "North America" = "#E8855A", "South America" = "#8B2252",
+  "Africa" = "#9B59B6",        "Europe"        = "#2C3E85",
+  "Asia"   = "#00847E",        "Oceania"       = "#5CC4BE"
+)
+```
+
+
+
+```{r, fig.width=14}
+gdp =(
+  ggplot(filter_gdp, aes(x = `GDP per capita` , y = `Fruit supply per person`))
+  + geom_point(aes(colour = `World region according to OWID`))
+  +scale_colour_manual(values = region_colors)
+  
+  +scale_y_continuous(breaks = c(0,50, 100, 150, 200, 250, 300, 350), label = c("0 kg","50 kg", "100 kg", "150 kg", "200 kg", "250 kg", "300 kg", "350 kg"))
+  +scale_x_log10(breaks = c(2000, 5000, 10000, 20000, 50000, 100000), labels = scales::dollar_format(accuracy = 1))
+  
+  +labs(
+  title    = "Fruit consumption vs. GDP per capita, 2023",
+  subtitle = "Average per capita fruit supply, measured in kilograms per year versus gross domestic product (GDP) per capita,\nadjusted for inflation and differences in living costs between countries.",
+  x = "GDP per capita (international-$ in 2021 prices; plotted on a logarithmic axis)",
+  y = "Fruit supply per person ",
+  colour = NULL
+) +
+theme_minimal() +
+theme(
+  plot.title       = element_text(face = "bold", size = 16),
+  plot.subtitle    = element_text(size = 10, color = "gray40"),
+  panel.background = element_rect(fill = "white", color = NA),
+  plot.background  = element_rect(fill = "white", color = NA),
+  panel.grid.major = element_line(linetype = "dashed", color = "gray85"),
+  panel.grid.minor = element_blank()
+)
+  
+  
+)
+
+gdp
+```
+

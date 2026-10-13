@@ -1,0 +1,148 @@
+---
+title: "Client Report - Exploring Names"
+subtitle: "Unit 1 Task 1"
+author: "[STUDENT NAME]"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd
+import numpy as np
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+```{python}
+# Learn morea about Code Cells: https://quarto.org/docs/reference/cells/cells-jupyter.html
+
+# Include and execute your code here
+df = pd.read_csv("https://github.com/byuidatascience/data4names/raw/master/data-raw/names_year/names_year.csv")
+```
+
+## QUESTION 1
+
+__What was the earliest year that the name ‘Felisha’ was used?__
+
+_type your results and analysis here_
+
+```{python}
+# Q1
+felisha = df.query('name == "Felisha"').sort_values("year", ascending= True).filter(items=["name", "year"])
+felisha.head(5)
+
+# (
+#   ggplot(felisha, aes(x='year', y='Total'))
+#   + scale_x_continuous(limits=[1918,2015], format= 'd')
+#   + geom_rect(xmin = 1964, ymin = 0, xmax = 2007, ymax = 250, color = 'blue', fill = 'blue', alpha = .2)
+# )
+```
+# Simple solution to Q1:
+```{python}
+felisha = df.query("name ==  'Felisha'").filter(["name", "year"])
+felisha.head(5)
+```
+
+## QUESTION 2
+
+
+
+__What year had the most babies named 'David'? How many babies were named 'David' that year?__
+
+
+```{python}
+# Simple code
+david = df.query("name == 'David'").filter(["name", "year", "Total"]).sort_values("Total", ascending=False)
+david.head(5)
+```
+_type your results and analysis here_
+
+```{python}
+# Q2
+david = df.query('name == "David"').sort_values("Total", ascending= False).filter(items=["name", "year", "Total"])
+david.head(5)
+```
+
+
+## QUESTION 3
+
+__What year did your name hit its peak? How many babies were named your name in that year?__
+
+_type your results and analysis here_
+
+```{python}
+# Q3
+andre = df.query('name == "Andre"').sort_values("Total", ascending= False).filter(items=["name", "year", "Total"])
+andre.head(5)
+```
+
+
+
+```{python}
+andre = df.query('name == "Andre"').filter(items = ["name", "year", "Total"]).sort_values("Total", ascending=False)
+andre
+```
+
+## QUESTION 4
+
+__How many babies are named ‘Oliver’ in the state of Utah for all years?__  
+
+
+```{python}
+oliver = df.query('name == "Oliver"').sort_values(["Total", "UT"], ascending = True).filter(items = ["Total"]).sum()
+
+oliver
+```
+_type your results and analysis here_
+
+```{python}
+# Q4
+# oliver = df.query('name == "Oliver"').sort_values(["Total", "UT"], ascending= False).filter(items=["Total"]).sum()
+# oliver.head(5)
+
+```
+
+---
+
+## QUESTION 5
+
+__In the most recent year, what was the most common female name in Utah?__ 
+
+_type your results and analysis here_
+
+```{python}
+female_names = df.sort_values(["year", "UT"], ascending = False).filter(items = ["name", "year", "UT"])
+
+female_names.head()
+```
+
+
+
+```{python}
+# Q5
+female_name = df.sort_values(["year", "UT"], ascending=[False, False]).filter(items = ["name", "year", "UT"])
+female_name.head()
+```
+
+
+---

@@ -1,0 +1,109 @@
+---
+title: "Client Report - Can You Predict That?"
+subtitle: "Unit 4 Task 1"
+author: "[STUDENT NAME]"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+from lets_plot import *
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix, classification_report
+# add the additional libraries you need to import for ML here
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+# import your data here using pandas and the URL
+#First thing is reading the data
+
+df = pd.read_csv("https://github.com/byuidatascience/data4dwellings/raw/master/data-raw/dwellings_ml/dwellings_ml.csv")
+df.head()
+```
+
+## QUESTION
+
+__Build a classification model labeling houses as being built “before 1980” or “during or after 1980”.__ Your goal is to reach or exceed 90% accuracy. Report your final model choice and any other model parameters you may have tweaked (train-test split ratio, tuning parameters, etc).  
+
+_type your write-up and analysis here_
+
+```{python}
+# Include and execute your code here
+# Create the Feature and the target (X, Y)
+df["before1980"] = np.where(df["yrbuilt"]< 1980, 1, 0)
+
+```
+
+```{python}
+# Select the feature and the target
+y = df["before1980"]
+
+x= df.select_dtypes(include= "number").drop(columns=["before1980", "yrbuilt"])
+```
+
+
+```{python}
+# split the model
+x_train, x_test, y_train, y_test = train_test_split(
+  x, y, train_size= 0.2, random_state=42
+)
+```
+
+```{python}
+#build the model and fit the model
+
+model = RandomForestClassifier(random_state=42)
+model.fit(x_train, y_train)
+```
+
+```{python}
+# make prediction
+pred = model.predict(x_test)
+```
+
+```{python}
+# check for acurrancy and other perfomance
+acc = accuracy_score(y_test, pred)
+print("Accurancy:", acc)
+
+
+print("\nConfusion_matrics")
+print(confusion_matrix(y_test, pred))
+
+print("\nClassification_Report")
+print(classification_report(y_test, pred))
+```
+
+```{python}
+importances = pd.DataFrame({
+  "feature": x_train.columns,
+  "importance": model.feature_importances_
+}).sort_values(by="importance", ascending=False)
+importances.head(10)
+```

@@ -1,0 +1,58 @@
+---
+title: "w10_task2"
+format: html
+---
+
+```{r,warning=FALSE, message=FALSE}
+# libraries
+library(tidyverse)
+library(ggrepel)
+```
+
+
+```{r}
+## read the data
+
+scriptures <- read.csv("https://github.com/beandog/lds-scriptures/raw/master/csv/lds-scriptures.csv")
+#glimpse(scriptures)
+```
+
+
+```{r}
+# Calculate the average verse length (number of words) in the New Testament compared to the Book of Mormon.
+
+Average_verse_length <- scriptures %>% 
+  filter(volume_title %in% c("Book of Mormon", "New Testament")) %>% 
+  mutate(word_count = str_count(scripture_text, pattern = "\\w+")) %>% 
+  group_by(volume_title) %>% 
+  summarize(avg_word_count = mean(word_count))
+Average_verse_length
+```
+```{r}
+# Count how often the word “Jesus” is used in the New Testament compared to the Book of Mormon.
+
+jesus <- scriptures %>% 
+  filter(volume_title %in% c("Book of Mormon", "New Testament")) %>% 
+  mutate(Jesus_count = str_count(scripture_text, pattern = "Jesus")) %>% 
+  group_by(volume_title) %>% 
+  summarize(total_jesus = sum(Jesus_count))
+jesus
+```
+
+```{r}
+
+
+ggplot <- scriptures %>% 
+  filter(volume_title == "Book of Mormon") %>% 
+  mutate(word_count = str_count(scripture_text, pattern = "\\w+")) %>% 
+  ggplot(aes(x = word_count)) +
+  geom_histogram(binwidth = 6, fill = "lightblue", color = "black") +
+  facet_wrap(~book_title, scales = "free_y") +
+  labs(title = "Distribution of Word Count by Verse in the Book of Mormon",
+       x = "Word Count per Verse",
+       y = "Frequency") +
+  theme_minimal()
+ggplot
+```
+
+

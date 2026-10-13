@@ -1,0 +1,35 @@
+---
+title: "Untitled"
+---
+
+```{r, warning=FALSE}
+library(sf)
+library(tidyverse)
+ID_counties <- USAboundaries::us_counties(states = "ID")
+st_crs(ID_counties)
+```
+
+```{r}
+(default_CRS_map <- ggplot() +
+  geom_sf(data = ID_counties) +
+  theme_bw())
+```
+```{r}
+default_CRS_map  +
+   coord_sf(crs = st_crs(	10783))
+ 
+```
+
+```{r}
+custom_crs <- st_crs(5041)$wkt
+#cat(custom_crs)
+custom_crs <- str_replace_all(custom_crs,
+      pattern = '"Latitude of natural origin",90',
+      replacement = '"Latitude of natural origin",40')
+
+default_CRS_map +
+  coord_sf(crs = st_crs(custom_crs))
+
+ggplot(data = ID_tr)
+```
+

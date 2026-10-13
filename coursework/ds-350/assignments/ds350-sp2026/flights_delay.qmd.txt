@@ -1,0 +1,133 @@
+---
+---
+title: "w03_Task3"
+Autor: Fabrice Andre
+---
+```{r}
+library(tidyverse)
+library(nycflights13)
+library(ggplot2)
+library(mosaic)
+library(forcats)
+library(plotly)
+```
+
+```{r}
+view(flights)
+```
+
+```{r}
+skimr::skim(flights)
+```
+
+```{r}
+colnames(flights)
+```
+#For each origin airport (JFK, EWR, LGA), which airline has the lowest 75th percentile 
+#of departure delay for flights scheduled to leave earlier than noon?
+
+```{r}
+first_question <- flights %>%
+  filter(sched_dep_time < 1200) %>%
+  group_by(carrier, origin) %>%
+  summarize(percentile = quantile(dep_delay, 0.75, na.rm = TRUE))
+
+```
+# Make the visualization
+
+```{r}
+p1 = (
+  ggplot(first_question, aes(x = reorder(carrier, percentile), y = percentile, fill = origin))
+  + geom_col(width = 1, color = "white")
+  +facet_wrap(~origin, scales = "free_x")
+  + theme(axis.text.x = element_text(angle = 45))
+  +labs(
+    y = "Minutes"
+  )
+)
+ggplotly(p1)
+```
+#For each origin airport (JFK, EWR, LGA), which airline has the lowest 75th percentile 
+#of departure delay for flights scheduled to leave earlier than noon?
+
+# Let us a BoxPlot 
+
+```{r}
+data_flights <- flights %>%
+  filter(sched_dep_time < 1200) %>%
+  group_by(carrier, origin) %>%
+  select(carrier, origin, dep_delay)
+data_flights
+```
+
+```{r}
+p2=(
+  ggplot(na.omit(data_flights), aes(x = carrier, y= dep_delay))
+  + geom_boxplot()
+)
+ggplotly(p2)
+```
+
+```{r}
+
+# 1. Filter for time and get rid of NAs
+plot_data <- flights %>%
+  filter(sched_dep_time < 1200) %>%
+  filter(!is.na(dep_delay))
+
+# 2. Plot with Facets and Zoom
+p2 <- ggplot(plot_data, aes(x = carrier, y = dep_delay, fill = origin)) +
+  geom_boxplot(outlier.alpha = NA) + # Makes outliers faint so we see the box
+  facet_wrap(~origin, ncol=1) +              
+  coord_cartesian(ylim = c(-5, 25)) + # THIS zooms in so we can see the 75th percentile
+  theme_minimal()+
+  labs(
+    title = "Lowest 75th percentile"
+  )
+
+ggplotly(p2)
+```
+#Which origin airport is best to minimize my chances of a late arrival when I am using Delta Airlines?
+
+```{r}
+delta_flight <- flights %>%
+  filter(carrier == 'DL')
+#delta_flight
+```
+
+```{r}
+p3=(
+  ggplot(delta_flight, aes(y = arr_delay, x = origin, fill = origin))
+  +geom_boxplot()
+  
+  +labs(
+    title = "Minimun chance of late arrival for Delta"
+  )
+)
+ggplotly(p3)
+```
+#Which destination airport is the worst airport for arrival delays? You decide on the metric for “worst.”
+
+
+```{r}
+worst_airports <- flights %>%
+  group_by(dest) %>%
+  filter(n() > 500) %>% # Filter for major destinations only
+  summarize(
+    avg_delay = mean(arr_delay, na.rm = TRUE),
+    p75_delay = quantile(arr_delay, 0.75, na.rm = TRUE),
+    percent_late = mean(arr_delay > 15, na.rm = TRUE) * 100
+  ) %>%
+  arrange(desc(p75_delay))
+
+head(worst_airports)
+```
+
+#Explanation
+The Metric: I used the p75_delay (75th percentile) because it shows that delays are a consistent problem at that airport, not just a one-time accident.
+
+The Data: TYS also has the highest avg_delay (24 minutes) and the highest percent_late (38.7%), making it the clear "winner" for the worst airport across all your metrics.
+
+title: "Untitled"
+---
+

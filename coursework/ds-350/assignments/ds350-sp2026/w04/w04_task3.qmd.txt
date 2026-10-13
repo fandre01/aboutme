@@ -1,0 +1,155 @@
+---
+title: "W04 Case Study: Combining Height Files"
+author: Fabrice Andre
+output: 
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: show
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, error = TRUE)
+#library(tidyverse)
+```
+
+
+```{r}
+library(tidyverse)
+library(mosaic)
+library(readr)
+library(readxl)
+library(plotly)
+library(haven)
+library(foreign)
+```
+
+```{r}
+#German male conscripts in Bavaria, 19th century: Stata format.
+German_male_conscripts_data <- read_dta("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w04/germanconscr.dta")
+head(German_male_conscripts_data)
+```
+```{r}
+german <- German_male_conscripts_data %>%
+  rename(birth_year = bdec, height.cm = height) %>%
+  mutate(height.in = height.cm / 2.54,
+         study = "German Male Conscripts") %>%
+  select(-gebger, -co)%>%
+  select(birth_year, height.in, height.cm, study)
+head(german)
+```
+
+
+
+
+
+```{r}
+#Heights of bavarian male conscripts, 19th century: Stata format.
+Heights_bavarian_male_conscripts <- read_dta("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w04/germanprison.dta")
+head(Heights_bavarian_male_conscripts)
+```
+```{r}
+bavarian <- Heights_bavarian_male_conscripts %>%
+  rename(birth_year = bdec,  height.cm = height)%>%
+  mutate(
+    height.in = height.cm / 2.54,
+    study = "Bavarian Male Conscripts"
+  )%>%
+select(-age, -co) %>%
+select(birth_year, height.in, height.cm, study)
+head(bavarian)
+```
+
+
+
+
+
+
+```{r}
+# Bureau of labor Statistics Height Data
+bureau_Height_data <- read.csv("https://raw.githubusercontent.com/hadley/r4ds/main/data/heights.csv")
+head(bureau_Height_data) 
+```
+```{r}
+labor <- bureau_Height_data %>%
+  filter(sex == "male") %>%
+  rename(height.in = height) %>%
+  mutate(height.cm = height.in * 2.54, 
+         birth_year =1950,
+         study = "BLS Height Data") %>%
+
+select(birth_year, height.in, height.cm, study)
+head(labor)
+```
+
+
+
+
+```{r}
+#Heights of south-east and south-west german soldiers born in the 18th century: DBF format.
+
+df <- unzip("C:/Users/andre/Downloads/Heights_south-east.zip", exdir = "C:/Users/andre/Downloads/Heights_south-east")
+df
+
+german_soldiers <- read.dbf("C:/Users/andre/Downloads/Heights_south-east/b6090.dbf")
+head(german_soldiers)
+
+```
+```{r}
+soldier <- german_soldiers %>%
+  rename(birth_year = GEBJ, height.cm = CMETER)%>%
+  mutate(height.in = height.cm / 2.54,
+         study = "SE/SW German Soldiers") %>%
+select(birth_year, height.in, height.cm, study)
+head(soldier)
+```
+
+
+```{r}
+#University of Wisconsin National Survey Data: SPSS (.sav) format
+wisconsin_data <- read_sav("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w04/main05022005.sav")
+head(wisconsin_data)
+```
+
+
+```{r}
+wisconsin <- wisconsin_data %>%
+  rename(birth_year = DOBY) %>%
+  mutate(birth_year = birth_year + 1900,
+         height.in = RH1 * 12 + RH2,
+         height.cm = height.in * 2.54,
+         study = "Wisconsin Survey") %>%
+  select(birth_year, height.in, height.cm, study) %>%
+  filter(!is.na(height.in), height.in >= 48, height.in <= 96)
+head(wisconsin)
+```
+
+```{r}
+#I Used the bind_rows() function to combine the five individual datasets into one dataset
+all_heights <- bind_rows(german, bavarian, soldier, labor, wisconsin)
+all_heights
+```
+
+To create the final dataset, I had to clean and organize five different datasets that came in different formats. The two German conscript datasets were in Stata format and already had height in centimeters, so I just converted them to inches by dividing by 2.54. The SE/SW German soldiers dataset was in a zipped DBF file, so I had to unzip it first before reading it. The column names were in German, so I used Google Translate to find that "GEBJ" meant birth year. The BLS dataset was in CSV format and already had height in inches, but I had to filter it to keep only males and I used 1950 as the birth year since none was provided. The Wisconsin Survey was in SPSS format and stored height in two separate columns — feet and inches — so I combined them. The birth year was stored as only two digits, so I added 1900 to fix it. I also had to remove rows with impossible height values caused by SPSS coding, which left only 120 usable rows out of 7,277. For all datasets, I created a "study" column to identify where each row came from, then combined everything using bind_rows().
+
+
+
+```{r}
+ggplot(all_heights, aes(x = study, y = height.in, fill = study)) +
+  geom_violin(alpha = 0.5) +
+  geom_boxplot(width = 0.2, alpha = 0.7) +
+  labs(title = "Height Distribution Across Five Studies",
+       x = "Study",
+       y = "Height (inches)") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")
+```
+
+Looking at the five datasets, the story is mostly the same as the previous task — people seem to have gotten taller over time. The older German datasets from the 1700s and 1800s show heights mostly between 63 and 66 inches, while the BLS dataset from 1950 shows heights closer to 69 or 70 inches. This matches what the previous task showed too. But the two tasks are not exactly the same. The previous task used average heights by country, which is easier to compare. This task uses individual people from different countries and different groups, which makes it harder to compare fairly. For example, the German data only includes male soldiers, who may not represent all German people.
+
+I do think humans are getting taller over time, but I am not 100% sure because the data has some problems. The Wisconsin Survey only had 120 usable rows and included both men and women, so it was not very reliable. The datasets also come from different countries and different time periods, so comparing them is not perfect. Better food, healthcare, and living conditions are probably why people grow taller, and the data does support that idea. But because the data is not perfect, I would say the trend points toward humans getting taller, but we need better data to be fully sure.

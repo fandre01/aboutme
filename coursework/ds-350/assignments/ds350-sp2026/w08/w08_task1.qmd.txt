@@ -1,0 +1,74 @@
+---
+title: "w08_task1"
+format: html
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(USAboundaries)
+library(ggrepel)
+library(tidyverse)
+library(sf)
+```
+
+```{r}
+# Let's  filter for the 48 contiguous states
+states48 <- us_states() %>% 
+  filter(!state_abbr %in% c("AK", "HI", "PR"))
+```
+
+```{r}
+# filter for Idaho counties
+idaho_counties <- us_counties() %>% 
+  filter(state_abbr == "ID")
+```
+
+```{r, warning=FALSE, message=FALSE}
+# top 3 per state
+top_cities <- us_cities() %>%
+  filter(!state_abbr %in% c("AK", "HI", "PR"), state_abbr %in% state.abb) %>% 
+  group_by(state_abbr) %>%
+  arrange(desc(population)) %>% 
+  slice_head(n = 3) %>% 
+  mutate(rank = row_number()) %>%
+  ungroup() %>%
+  st_as_sf()
+```
+
+```{r, warning=FALSE, message=FALSE}
+
+# Let create the Map
+ggplot() +
+ 
+  geom_sf(data = states48, fill = NA, color = "darkgrey", linewidth = 0.5) +
+  
+  
+  geom_sf(data = idaho_counties, fill = NA, color = "grey50", linewidth = 0.3) +
+  
+  geom_sf(data = top_cities, aes(color = factor(rank), size = population / 1000)) +
+  
+  
+  geom_label_repel(
+    data = filter(top_cities, rank == 1),
+    aes(geometry = geometry, label = city),
+    stat = "sf_coordinates", 
+    size = 2, 
+    max.overlaps = Inf,
+    color = "#08306B",
+    label.padding = unit(0.15, "lines"),
+    box.padding = unit(0.25, "lines")
+  ) +
+  
+  
+  scale_color_manual(values = c("#08306B", "#2171B5", "#9ECAE1"), guide = "none") +
+  scale_size_continuous(name = "Population\n(1,000)") +
+  guides(size = guide_legend(override.aes = list(color = "#08306B"))) + 
+  
+  
+  labs(x = NULL, y = NULL) + 
+  theme_bw() +
+  theme(panel.grid.major = element_line(color = "grey90", linewidth = 0.5))
+
+# Save the image
+ggsave("us_map.png", width = 15, height = 10)
+```
+

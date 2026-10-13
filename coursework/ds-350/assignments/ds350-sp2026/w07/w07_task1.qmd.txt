@@ -1,0 +1,123 @@
+---
+title: "w07_task1"
+format: html
+---
+
+```{r, warning=FALSE}
+library(lubridate)
+library(pander)
+library(tidyverse)
+```
+
+```{r}
+Sale <- read.csv("https://byuistats.github.io/M335/data/sales.csv")
+
+```
+```{r}
+# convert the time the right time zone
+
+correct_time <- Sale |>
+  mutate(
+    time_UTC = ymd_hms(Time),
+    time_mt = with_tz(time_UTC, tzone = "America/Denver")
+    
+    ) |>
+  select(Time, time_UTC, time_mt, Name, Type, Amount)
+  
+
+```
+
+
+```{r}
+# Let's check for bad 
+# Any missing value
+correct_time |> summary()
+
+```
+
+```{r}
+# What companies are in the data?
+correct_time |> distinct(Name)
+```
+```{r}
+correct_time |> filter(Name == "Missing")
+```
+
+
+
+```{r}
+# Do any transactions have negative or zero amounts?
+#correct_time |> filter(Amount <= 0)
+```
+
+```{r}
+# What's the date range of the data?
+correct_time |> summarise(start = min(time_mt), end = max(time_mt))
+```
+```{r}
+sales_clean <- correct_time |> 
+  filter(Name != "Missing") |>
+  mutate(Amount = abs(Amount))
+```
+
+```{r}
+#nrow(sales_clean)
+#distinct(sales_clean, Name, Amount)
+```
+
+```{r}
+# Build the weekly aggregation
+revenue_weekly <- sales_clean |>
+  mutate(week = floor_date(time_mt, unit = "week")) |>
+  group_by(Name, week) |>
+  summarise(gross_revenue = sum(Amount), .groups = "drop")
+
+ ggplot(revenue_weekly, aes(x = week, gross_revenue , color = Name)) +
+   geom_line(linewidth = 1) +
+   geom_point() +
+   facet_wrap(~Name, scales = "free_y") +
+   labs(
+     title = "Weekly Gross Revenue by Company",
+     x = "Date",
+     y = "Gross Revenue ($)",
+     color = "Company"
+   )
+ 
+```
+
+```{r}
+# build the customer traffic
+# Aggregate transaction counts by day
+traffic_daily <- sales_clean |> 
+  mutate(day = floor_date(time_mt, unit = "day")) |> 
+  group_by(Name, day) |> 
+  summarise(transactions = n(), .groups = "drop")
+
+# Plot Customer Traffic
+ggplot(traffic_daily, aes(x = day, y = transactions, color = Name)) +
+  geom_line() +
+  theme_minimal() +
+  labs(
+    title = "Daily Customer Traffic (Transaction Count)",
+    x = "Date",
+    y = "Number of Transactions"
+  )
+```
+
+```{r}
+
+hourly_ops <- sales_clean |> 
+  mutate(hour_of_day = hour(time_mt))
+
+
+ggplot(hourly_ops, aes(x = hour_of_day, fill = Name)) +
+  geom_histogram(binwidth = 1, color = "white", show.legend = FALSE) +
+  facet_wrap(~Name) +
+  theme_minimal() +
+  labs(
+    title = "Transaction Volume by Hour of Day (Mountain Time)",
+    x = "Hour of Day (24-Hour Clock)",
+    y = "Total Transactions"
+  )
+```
+Based on the charts, HotDiggity performed the best over the three months. Even though LeBelle had a really high revenue spike at the end of June, their sales went up and down too much. HotDiggity was much more consistent. Every single week, they kept their gross revenue high, usually staying between $2,000 and $3,500. They also did not drop as low as the other companies during their slow weeks. This steady performance shows they have a strong, reliable customer base, which makes them the most successful business overall.

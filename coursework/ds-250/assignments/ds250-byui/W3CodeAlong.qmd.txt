@@ -1,0 +1,90 @@
+---
+title: "Week 3"
+format: html
+---
+
+```{python}
+# Step 1: Import the libraries we need
+import pandas as pd
+import numpy as np
+from lets_plot import *
+
+# This line makes the charts show up in Jupyter / Quarto
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+```{python}
+# Step 2: Read in the dataset
+# Replace the ... with the correct URL
+df = pd.read_csv("https://byui-cse.github.io/cse110-course/lesson11/life-expectancy.csv")
+# Rename the column "Life expectancy (years)" to just "Life"
+# Hint: use df.rename(columns={ ... : ... })
+df = df.rename(columns = {'Life expectancy (years)' : 'Life'})
+# Look at the first few rows to check
+df.head()
+
+```
+
+
+```{python}
+# Step 3: Filter the dataset for only 3 countries
+# Hint: use df.query with Entity == [list of countries]
+
+three_countries = df.query('Entity == ["Afghanistan", "United States", "Canada"]')
+#df.query('name == country')
+
+# Double-check how many rows per country we got
+three_countries['Entity'].value_counts()
+
+```
+
+
+```{python}
+# Step 4: Create a line plot
+# Hints:
+#   - Use ggplot()
+#   - Map x = 'Year', y = 'Life', color = 'Entity'
+#   - Add geom_line()
+
+p = (
+    ggplot(data = three_countries, mapping = aes(x = 'Year', 
+    y = 'Life', color = 'Entity'))
+    + geom_line()
+)
+
+# Show the chart
+p
+
+```
+
+
+```{python}
+# Add limits for x-axis: 1950 to 2020
+# Also make sure the labels show as whole numbers (format = 'd')
+
+p = (
+    ggplot(data = three_countries, mapping = aes(x = 'Year', y = 'Life', color = 'Entity'))
+    + geom_line()
+    + scale_x_continuous(limits=[1950,2020], format='d')
+)
+
+p
+
+```
+
+
+```{python}
+# Add a title and adjust colors, grid, etc.
+p + theme(
+    axis_title = element_blank(),
+    plot_title = element_text(color='blue', hjust=0.5, size=25),
+    panel_grid = element_line(linetype=2, color='red')
+)
+
+```
+
+```{python}
+# Apply the built-in minimal theme
+p + theme_minimal2()
+
+```

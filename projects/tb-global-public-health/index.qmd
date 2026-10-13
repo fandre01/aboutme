@@ -1,0 +1,34 @@
+---
+title: "TB Global Public Health Analysis"
+description: "An interactive analysis of more than 40,000 global health records, with maps and charts for exploring tuberculosis trends and anomalies."
+date: "2026-10-13"
+categories: [Python, Data Visualization, Databricks, Streamlit]
+featured: true
+image: thumbnail.png
+tools: [Python, Pandas, Databricks, Streamlit]
+---
+
+## The problem
+
+Global public health data can be messy and difficult to explore. This project turns a large collection of health records into an interactive way to investigate tuberculosis trends, geographic patterns, and unusual values.
+
+## My approach
+
+I cleaned and validated more than 40,000 global health records, then organized the results into an interactive Streamlit application. The app uses maps and tracking charts so viewers can explore patterns instead of reading through raw records.
+
+## The work
+
+The analysis used Python and Pandas for data preparation, Databricks for working with the data, and Streamlit for the interactive application. The main design goal was to make trends and anomalies understandable to someone who needs to explore the data directly.
+
+## The result
+
+The final application provides an interactive view of 40,000+ cleaned and validated records, including live maps and tracking charts for exploring global tuberculosis patterns.
+
+## What I learned
+
+<!-- TODO: Add what was hardest about cleaning or presenting this dataset and what you would do differently. -->
+
+## Links
+
+- [View the live Streamlit app](https://tb-global-analysis-o5tsmoqp8nrfj6dpqxrwha.streamlit.app/)
+- Code: <!-- TODO: Add the repository link if you want to show the source code. -->

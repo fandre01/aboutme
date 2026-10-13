@@ -1,0 +1,68 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{python}
+# Step 1: Import libraries
+import pandas as pd
+import numpy as np
+from sklearn.datasets import load_wine
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from lets_plot import *
+LetsPlot.setup_html()
+
+```
+```{python}
+wine = load_wine()
+
+
+df = pd.DataFrame(wine.data, columns= wine.feature_names)
+df['target'] = wine.target
+df['target'] = df['target'].map({0: 'class_0', 1: 'class_1', 2: 'class_2'})
+
+df.head()
+```
+```{python}
+X = wine.data
+y = wine.target
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size= 0.4, random_state=42, stratify= y)
+```
+
+```{python}
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+```
+
+```{python}
+knn = KNeighborsClassifier(n_neighbors = 3)
+knn.fit(X_train_scaled, y_train)
+```
+
+
+```{python}
+
+y_pred = knn.predict(X_test_scaled)
+
+print("Acurracy:", accuracy_score(y_test, y_pred))
+# Accuracy tells you how often the model is right
+
+print("\n Confution Matrix: \n", confusion_matrix(y_test, y_pred))
+
+print("\n Classification Report", classification_report(y_test, y_pred))
+#Precision : when the model says "type A" how often is it correct?
+# (TP) / (TP + FP )
+
+
+# Recall: when you have "type A," how often does the model predict it/
+# (TP) / (TP + FN)
+
+#f1-score: how good is the model overall at both prescision and recall?
+
+#Support: How many test samples actually belong to "type A"
+```

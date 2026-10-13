@@ -1,0 +1,60 @@
+---
+title: "Untitled"
+---
+
+```{r}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+
+# Load the raw data
+rds_data <- read_rds("https://github.com/byuistats/data/raw/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.RDS")
+
+# Clean and filter
+rds_tidy <- rds_data %>%
+  # 1. Isolate the DJIA rows to match the target table
+  filter(variable == "DJIA") %>%
+  
+  # 2. Extract the correct ending month and ending year
+  mutate(
+    # Strip everything before the dash to keep the ending month and year (e.g., "June1990")
+    end_chunk = str_replace(contest_period, "^.*-", ""),
+    
+    # Extract just the letters for the Month (e.g., "June")
+    month_end = str_extract(end_chunk, "[A-Za-z]+"),
+    
+    # Extract the 4 digits at the end for the Year (e.g., "1990")
+    year_end = str_extract(end_chunk, "\\d{4}")
+  ) %>%
+  
+  # 3. Keep only the columns we need for pivoting
+  select(month_end, year_end, value)
+
+# Save your tidy data to an RDS object as required by the assignment
+saveRDS(rds_tidy, "Rds_data.rds")
+```
+
+```{r}
+# Pivot the clean data into the final format
+rds_final <- rds_tidy %>%
+  # 1. Factor the month column so it sorts from January to December chronologically
+  mutate(month_end = factor(month_end, levels = month.name)) %>%
+  
+  # 2. Pivot wide using the year columns as headers
+  pivot_wider(
+    names_from = year_end,
+    values_from = value,
+    values_fill = list(value = NA) # Keeps them numeric for sorting, or use "-" if required
+  ) %>%
+  
+  # 3. Arrange rows from January to December
+  arrange(month_end) %>%
+  
+  # 4. Match the exact header capitalizations
+  rename(Month = month_end)
+
+# Display your beautifully replicated table
+print(rds_final)
+```
+

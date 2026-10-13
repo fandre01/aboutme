@@ -1,0 +1,111 @@
+---
+title: "Client Report - Longevity of Baseball Players"
+subtitle: "Unit 2 Task 3"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+import sqlite3
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+# Learn morea about Code Cells: https://quarto.org/docs/reference/cells/cells-jupyter.html
+
+# Include and execute your code here
+sqlite_file = 'lahmansbaseballdb.sqlite'
+# this file must be in the same location as your .qmd or .py file
+con = sqlite3.connect(sqlite_file)
+```
+
+## QUESTION 1
+
+__Write an SQL query that pulls in the batting average table. Then, with Python Pandas code create a dataframe that contains playerID, yearID, and batting average for players with at least 10 at bat that year. Sort the dataframe from highest batting average to lowest, and then by playerid alphabetically. Show the top 5 results in your report.__
+
+_The dataframe displays the top 5 players by batting average among those who had at least 10 at bats in a given year. The batting average was calculated by dividing hits by at bats (H/AB). Sorting was done first by batting average (descending) and then by player ID alphabetically to break ties. This ensures that the top hitters are ranked correctly based on performance for that year_
+
+```{python}
+# Execute an SQL query to pull in the data
+q = """SELECT *
+        FROM batting
+    """
+df_batting = pd.read_sql_query(q, con)
+```
+
+```{python}
+
+# Calculate batting average per player per year
+batting = df_batting[df_batting['AB'] >= 10].copy()
+
+# calculate batting average (H / AB)
+batting['batting_average'] = batting['H'] / batting['AB']
+
+# Select only needed columns
+df_result = batting[['playerID', 'yearID', 'batting_average']]
+
+# Sort by batting_average (descending), then by playerID (ascending)
+df_result = df_result.sort_values(by=['batting_average', 'playerID'], ascending= [False, True])
+
+# show top 5 results
+df_result['batting_average'] = df_result['batting_average'].round(3)
+
+df_result.head(5)
+
+```
+
+## QUESTION 2
+
+__Now use Python Pandas to calculate the batting average for players over their entire careers (all years combined). Only include players with at least 100 at bats over their entire career, and print the top 5 results.__
+
+_The table shows the top 5 players with the highest career batting averages among those who had at least 100 total at-bats. The batting averages were calculated by summing each player’s hits and at-bats across all seasons and dividing total hits by total at-bats. Sorting was done by batting average in descending order to highlight the most consistent hitters over their careers._
+
+```{python}
+# Include and execute your pandas code code here. (You already read in the batting table in Question 1)
+# Group by playerID to sum up all years (career totals)
+career = df_batting.groupby('playerID', as_index=False).agg({'H': 'sum', 'AB': 'sum'})
+
+# Only include players with at least 100 total at bats
+career = career[career['AB'] >= 100]
+
+# Calculate career batting average
+career['batting_average'] = career['H'] / career['AB']
+
+# Sort by batting_average (descending), then by playerID alphabetically
+career = career.sort_values(by=['batting_average', 'playerID'], ascending=[False, True])
+
+# Round batting averages to 3 decimals
+career['batting_average'] = career['batting_average'].round(3)
+
+# Show top 5 results
+career.head(5)
+
+
+```
+
+

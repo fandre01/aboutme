@@ -1,0 +1,305 @@
+---
+title: "Client Report - Star Wars for Dummies"
+subtitle: "Unit 5 Task 3"
+author: "Fabrice"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+from lets_plot import *
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+# add the additional libraries you need to import for ML here
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+# import your data here using pandas and the URL
+df = pd.read_csv("https://github.com/fivethirtyeight/data/raw/master/star-wars-survey/StarWars.csv", encoding_errors= 'ignore', skiprows=1)
+df.head()
+```
+# Shorten the column names and clean them up for easier use with pandas. Provide a table or list that exemplifies how you fixed the names.
+
+```{python}
+new_col_names = [
+  "respondant_id", "seen_any", "fan_starwars",
+
+  #whether seen each movie
+  "seen_epi1", "seen_epi2", "seen_epi3", "seen_epi4",
+   "seen_epi5", "seen_epi6",
+
+  #Movie Ranking (1=best, 6= worst)
+  "rank_epi1", "rank_epi2", "rank_epi3", "rank_epi4",
+   "rank_epi5", "rank_epi6",
+
+  #Character favorability rankings
+  "fav_han", "fav_luke", "fav_leia", "fav_anakin",
+  "fav_obi", "fav_palantine", "fav_darth", "fav_lando",
+  "fav_boba", "fav_c3po", "fav_r2", "fav_jar", "fav_padme",
+  "fav_yoda",
+  #who shot first
+  "who_shot_first",
+  #who about expanded Universe?
+  "familiar_expanded_universe",
+
+  #Fan of the Expanded Universe
+  "fan_expanded_universe",
+
+  #star Trek fan?
+  "fan_startrek",
+
+# Demographic
+"gender", "age", "income", "educ", "location"
+
+]
+
+df.columns = new_col_names
+
+```
+# Filter the dataset to 835 respondents that have seen at least one film (Hint: Don’t use the column Have you seen any of the 6 films in the Star Wars franchise?)
+```{python}
+seen_cols = ["seen_epi1", "seen_epi2", "seen_epi3", "seen_epi4",
+   "seen_epi5", "seen_epi6"]
+
+df_seen = df[df[seen_cols].notna().any(axis=1)]
+
+print(df_seen.shape)
+
+
+# filter data set to respindents who have seen at leat one movie
+df_cleaned = df.dropna(subset= seen_cols, how ='all').reset_index(drop=True)
+df_cleaned.head()
+```
+# Validate that the data provided on GitHub lines up with the article by recreating 2 of the visuals from the article. These visuals should be similar, including titles, subtitles, gridlines, order of categories, colors, etc. But, they don’t have to be exact. They need to be close enough that we can validate that the values in the dataset match the graphs in the chart. Though their charts were built using a different plotting software, the more you push yourself for an exact replica, the more you will learn. Spend at least a couple of hours on this.
+
+
+# Creat a new colunm that converts the age ranges to a single number. Drop the age range categorical colunm
+```{python}
+def age_mapping(range):
+  if range == '18-29':
+    return 23.5
+  elif range == '30-44':
+    return 37
+  elif range == '45-60':
+    return 52.5
+  elif range == '>60':
+    return 69
+  else:
+    np.nan
+
+
+df_cleaned['age_mid'] = df_cleaned['age'].apply(age_mapping).astype('float64')
+
+df_cleaned.head()
+```
+
+```{python}
+df_cleaned['age_mid'].unique()
+
+
+
+df_cleaned['missing_age'] = df_cleaned['age_mid'].isna().astype(int)
+
+df_cleaned['age_mid'] =df_cleaned['age_mid'].fillna(0)
+```
+
+```{python}
+# drop the age range category
+
+df_cleaned = df_cleaned.drop(columns='age')
+
+```
+## Create a new column that convert education grouping to a single number. Drop the school categorical column.
+```{python}
+df_cleaned['edu_level'] = 0 # default is 0
+
+df_cleaned.loc[df_cleaned['educ'] == 'Less than high school degree', 'edu_level'] = 10
+
+df_cleaned.loc[df_cleaned['educ'] == 'High school degree', 'edu_level', 'edu_level'] = 12
+
+df_cleaned.loc[df_cleaned['educ'] == 'Some college Or Associate degree', 'edu_level'] = 14
+
+df_cleaned.loc[df_cleaned['educ'] == 'Bachelor Degree', 'edu_level'] = 16
+
+df_cleaned.loc[df_cleaned['educ'] == 'Graduate Degree', 'edu_level'] = 18
+
+df_cleaned = df_cleaned.drop(columns= 'educ')
+df_cleaned.head()
+
+```
+
+## Create a new column that convert the income
+
+```{python}
+def income_mapping(range):
+  if range == '$0 - $24,999':
+    return 12500
+  elif range == '$25, 000 - $49,999':
+    return 37500
+  elif range == '$100,000 - $149,999':
+    return 125000
+  elif range == '$50, 000 - $99,999':
+    return 75000
+  elif range == '$150,000+':
+    return 150000
+  else:
+    np.nan
+
+
+df_cleaned['household_income'] = df_cleaned['income'].apply(income_mapping).astype('float64')
+
+df_cleaned['missing_income'] = df_cleaned['income'].apply(income_mapping).astype(int)
+
+df_cleaned['household_income'] = df_cleaned['household_income'].fillna(0)
+
+```
+
+```{python}
+df_cleaned['target'] = ( df_cleaned['house_income'] >= 5000)
+```
+
+
+```{python}
+favoribility_cols = []
+
+for col in df_cleaned.columns:
+  if col.startswith("fav_"):
+    fovorability_cols.append(col)
+
+# print (favoribility_cols)
+
+categorical_cols= favoribility_cols.copy()
+
+object_columns = df_cleaned.select_dtypes(include= "object").columns
+
+
+for col in object_columns:
+  if col not in favoribility_cols:
+    categorical_cols.append(col)
+
+# print(categorical_cols)
+df_encoded = pd.get_dummies(df_cleaned, columns= categorical_cols, dtype= int)
+
+df_encoded.head()
+```
+
+```{python}
+target = "target"
+
+# Prepare the feature (variable)
+X = df_encoded.drop(columns= ["target", "household_income"])
+
+y = df_encoded['target']
+
+
+# Train/Test
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.2, random_state=42)
+
+# Build / train the model
+
+model= RandomForestClassifier(n_estimators=100, random_state=42)
+
+model.fit(X_train, y_train)
+
+#Run the evaluation
+
+y_prep = model.predict(X_test)
+print(accuracy_score(y_test, y_prep))
+
+
+```
+# Feature importance
+
+```{python}
+feature_importances = model.feature_importances_
+feature_names = list(X.columns)
+
+feat_imp_df = pd.DataFrame({
+    "feature" : feature_names,
+    "importance": feature_importances
+}).sort_values("importance", ascending= = False)
+
+feat_imp_df_top["feature"] = pd.Categorical(
+  feat_imp_df_top['feature'],
+  categories= feat_imp_df_top["feature"],
+  ordered= True
+)
+
+ggplot(feat_imp_df_top, aes(x = "feature", y = "importance")) +\
+  geom_bar(stat = 'identity') +\
+  coord_flip()
+
+```
+
+# predicted Probabilities
+
+```{python}
+y_prop = model.predict_proba(X_test)[:,1]
+
+proba_df = pd.DataFrame({"probability": y_prop})
+
+ggplot(proba_df)
+```
+
+<!-- Rather than a simple write up like we have been doing so far, this project requires a more structured approach. You will need to show you have completed the tasks, but will structure the report in a way that is more like a client report. The report will be structured as follows:
+
+ - Executive Summary: This is a high level overview of the analysis, including the problem statement, the data used, and the main findings. It should be concise and to the point, summarizing the key insights/recommendations without going into too much detail. These are usually bullet points, no graphs. PLEASE EXPLICITLY STATE IN THIS SECTION WHERE YOU DID THE STRETCH OR NOT! 
+ - Methods: this is a high level overview of the methods used in the analysis. This should include an explanation of data preparation steps, especially how you dealt with each categorical variable and why. Showing the resulting or original distribution of variables may be helpful. Describe how you handled missing values and outliers. How did/might your decisions impact results?Explain any feature engineering steps you took. This is also where you will put the graphs you recreated to show you validated the dataset and that it matches the article.
+ - Results: this is a more in-depth explanation of results. A classification report and feature importance graphs belong here.
+ - Conclusion: this is where you will discuss the implication of the results, including any limitations of the analysis, and recommendations for actions/future work. It may feel repetitive to the executive summary, but it should be more detailed and include any additional insights you gained from the analysis. -->
+
+## Executive Summary
+
+_type your write-up and analysis here_
+
+
+
+## Methods
+
+_type your report here, you will likely want multiple code chunks and text intermingled_
+
+```{python}
+# Include and execute your code here
+
+
+```
+
+## Results
+
+_type your report here, you will likely want multiple code chunks and text intermingled_
+
+```{python}
+# Include and execute your code here
+
+
+```
+
+## Results
+
+_type your report here_

@@ -1,0 +1,44 @@
+---
+title: "First Quarto File"
+format:
+  html:
+    code-fold: true
+    code-line-numbers: true
+execute:
+  error: true
+---
+
+
+Critique of 3 articles that use data and visualization to answer a question:
+
+<!-- For each of the 3 articles be sure to include the url to the article, and one paragraph that lists a few good/unique things about the visualization(s) in the article, and a at least 1 thing that could be improved. -->
+
+<!-- At the bottom don't forget to add an R code chunk that contains the following code: plot(1:20). This is to ensure that the rendering is working right and that you can see the graphs you create after the webpage is published. -->
+
+
+## Article Reviews
+
+**Article 1: Life Expectancy**
+[Link to Article](https://ourworldindata.org/grapher/life-expectancy?country=OWID_WRL~Americas~OWID_EUR~OWID_AFR&time=1770..2023&tab=line)
+
+The visualization in this article is highly effective because it uses a clean line chart to compare life expectancy across different continents over a massive timespan. I specifically like the use of direct labeling and distinct colors for each continent, which removes the need for a separate legend and makes the data instantly readable. Additionally, the interactivity of the chart—allowing users to switch to a map view or filter specific regions—is a unique strength. However, the visualization could be improved by adding annotations for significant historical events that caused visible dips in the data, as a general viewer might not immediately know the context behind the fluctuations.
+
+---
+
+**Article 2: Agricultural Land Use per Capita**
+[Link to Article](https://ourworldindata.org/grapher/agricultural-area-per-capita?tab=discrete-bar&time=latest)
+
+
+This visualization effectively uses a horizontal bar chart to compare agricultural land availability across different regions. I appreciate the use of direct data labels at the end of each bar, which makes the specific values easy to read without scanning back and forth to the axis. While the use of a contrasting red color for the "World" average is intended to provide a benchmark for comparison, it feels somewhat inconsistent with the rest of the palette and could be visually distracting. To improve this chart, it would be helpful to use a stacked bar format to distinguish between cropland and grazing land, providing more depth into how the land is actually being utilized in each region.
+
+---
+
+**Article 3: Gas Prices and Presidential Approval**
+[Link to Article](https://www.nytimes.com/2026/04/16/learning/whats-going-on-in-this-graph-april-29-2026.html)
+
+This visualization uses a simplified area-line chart to track the fluctuation of average gas prices. While the minimalist design makes the trend line very easy to follow, the complete absence of labels on the x-axis is a significant drawback, as the reader cannot determine the specific years or months being represented. To improve this graph, I would add chronological markers on the x-axis and perhaps include a second line for presidential approval ratings, as the title suggests a correlation that isn't visually supported by the single line shown here. Adding vertical annotations to mark major economic shifts would also help provide the necessary context for the price spikes.
+
+## Practice Plot
+
+```{r}
+plot(1:20);

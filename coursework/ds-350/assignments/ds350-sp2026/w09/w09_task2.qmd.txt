@@ -1,0 +1,53 @@
+---
+title: "Interactive Idaho Building Permits Map"
+author: "Fabrice Andre"
+format: html
+---
+```{r, warning=FALSE, message=FALSE}
+library(USAboundaries)
+library(tidyverse)
+library(buildings)
+library(sf)
+library(leaflet)
+
+# let's get Idaho county shapes
+idaho_map <- us_counties(states = "Idaho") %>%
+  mutate(county_fips = as.integer(countyfp))
+
+# I filter and summarizes the permit data
+idaho_permits <- permits %>%
+  filter(state == 16, variable == "Single Family") %>%
+  group_by(county) %>%
+  summarize(total_permits = sum(value, na.rm = TRUE), .groups = "drop")
+
+# Let's join the data 
+map_data <- idaho_map %>%
+  left_join(idaho_permits, by = c("county_fips" = "county")) %>%
+  st_transform(crs = 4326)
+
+
+pal <- colorNumeric(palette = "plasma", domain = map_data$total_permits)
+
+# let's build the interactive map 
+leaflet(map_data) %>%
+  addTiles() %>%
+  addPolygons(
+    fillColor = ~pal(total_permits),
+    fillOpacity = 0.7,
+    color = "white",
+    weight = 1,
+    popup = ~paste0("<b>County:</b> ", name, "<br><b>Permits:</b> ", total_permits),
+    highlightOptions = highlightOptions(weight = 3, color = "#666", bringToFront = TRUE)
+  ) %>%
+  addLegend(
+    pal = pal, 
+    values = ~total_permits, 
+    title = "Total Permits", 
+    position = "bottomright"
+  )
+```
+
+For this assignment, I made an interactive map using Leaflet to show the total number of single-family building permits across Idaho counties. I chose a choropleth map because it makes it easy to see geographic patterns right away — darker colors mean more permits were issued. The plasma color palette works well here because it has strong contrast between counties, so differences are easy to spot.
+
+Looking at the map, most of the permits are concentrated in just a few counties. Ada and Canyon counties, which are in the Boise and Valley area, have by far the most permits, which makes sense since that region has been growing fast. Kootenai County in north Idaho also stands out compared to the rest. Most other counties, especially in the rural and mountain areas, have very few permits. The interactive popups help a lot here because you can click any county and see the exact number instead of just guessing from the color.
+

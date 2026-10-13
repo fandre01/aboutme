@@ -1,0 +1,82 @@
+---
+title: "w10_task3"
+format:
+  html:
+    embed-resources: true
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(scales)
+library(patchwork)
+library(pander)
+```
+
+```{r, warning=FALSE, message=FALSE}
+# Read the data
+scripture <- read_csv("https://raw.githubusercontent.com/beandog/lds-scriptures/master/csv/lds-scriptures.csv")
+
+savior_name <- read_rds("https://byuistats.github.io/M335/data/BoM_SaviorNames.rds")
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+# Filter to Book of Mormon only
+scriptures <- scripture |>
+  filter(volume_title == "Book of Mormon")
+```
+
+```{r, warning=FALSE, warning=FALSE}
+# Let buil one patern from all Savior names
+savior <- str_c(savior_name$name, collapse = "|")
+
+#Let colapse all verses into one big string, then split on each Savior name
+bom_text <- str_c(scriptures$scripture_text, collapse = " ")
+segments <- str_split(bom_text, savior)[[1]]
+
+# Count the words in each segment
+sevior_names <- tibble(split = segments) |>
+  mutate(word_count = str_count(str_trim(split), "\\S+"))
+```
+
+```{r, warning=FALSE, message=FALSE}
+avg_words <- mean(sevior_names$word_count, na.rm = TRUE)
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+
+ggplot(sevior_names, aes(x = word_count)) +
+  geom_histogram(binwidth = 30, fill = "#2c6e9e", color = "white") +
+  geom_vline(xintercept = avg_words, color = "#c0392b", linewidth = 1, linetype = "dashed") +
+  annotate("text", x = avg_words + 15, y = Inf, vjust = 1.5, hjust = 0,
+           label = paste0("Mean: ", round(avg_words, 1), " words"),
+           color = "#c0392b", fontface = "bold", size = 4) +
+  scale_x_continuous(limits = c(0, 500), labels = comma) +
+  labs(
+    title = "Distribution of Distance Between Savior Names",
+    subtitle = "Book of Mormon — words between each mention of a Savior name",
+    x = "Number of Words",
+    y = "Count"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    plot.subtitle = element_text(color = "gray40"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+The Book of Mormon has many names for Jesus Christ, like "Lord," "Savior," and "Redeemer." I counted how many words appear between each one of those names to see how often He is mentioned. The average is about **65 words**, which is not a lot — that is less than a short paragraph.
+
+The graph shows that most gaps are small, usually under 100 words. There are a few longer gaps, but they are not common. This tells me that the Savior is mentioned very often in the Book of Mormon. No matter where you read, His name shows up again pretty quickly.
+
+```{r}
+# Average words between Savior name mentions
+round(mean(sevior_names$word_count, na.rm = TRUE), 1)
+```
+**AI Usage:**
+
+ I used chat gpt AI,  assistance to help with the `annotate()` function in my graph, to position the "Mean: 64.8 words" label next to the vertical dashed line on the histogram. 

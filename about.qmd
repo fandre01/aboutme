@@ -6,16 +6,16 @@ about:
   links:
     - icon: github
       text: GitHub
-      href: https://github.com/YOUR-USERNAME      # TODO
+      href: https://github.com/fandre01
     - icon: linkedin
       text: LinkedIn
-      href: https://www.linkedin.com/in/YOUR-PROFILE   # TODO
+      href: https://www.linkedin.com/in/fabrice-andre-b795533b8
 ---
 
-<!-- TODO: write this yourself. A good About page answers four questions:
+<!-- Write this in your own voice. A good About page can answer:
 1. What do you do and what are you studying?
-2. What kind of problems do you like?
-3. What have you built that you are proud of?
+2. What kinds of data problems do you enjoy solving?
+3. What have you built or contributed to that you are proud of?
 4. How can someone reach you? -->
 
-Write about yourself here.
+<!-- Add your short personal introduction here in your own voice. -->

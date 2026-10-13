@@ -1,0 +1,40 @@
+---
+title: "Untitled"
+---
+```{r}
+library(tidyquant)
+library(tidyverse)
+```
+
+
+
+```{r}
+price_data <- tq_get(c("BA", "AMZN", "MSFT"),
+                    get = "stock.prices",
+                    from = "2020-03-01")
+
+#You can add "to = " also to further refine the dates
+
+price_data
+```
+```{r}
+return_data <- price_data %>%
+  group_by(symbol) %>%
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = "monthly",
+               type = "log")
+return_data
+```
+```{r}
+return_data %>%
+  tq_portfolio(assets_col=symbol,
+               returns_col=daily.returns
+               )
+```
+
+```{r}
+packageVersion("rlang")
+
+```
+

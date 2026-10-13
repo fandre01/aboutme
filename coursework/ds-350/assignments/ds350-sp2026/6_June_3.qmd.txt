@@ -1,0 +1,51 @@
+---
+title: "Untitled"
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+mdy("January 21st, 2017")
+```
+```{r}
+ymd()
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+date_cols <- tibble(month = c(1, 3, 7),
+                    m_name = c("Jaunary", "March", "July"),
+                    day = c(23, 18, 1),
+                    year = c(2017, 2017, 2016))
+
+# Will m_name work in make_date()?
+date_cols
+?make_date()
+date_cols %>% mutate(a_date = make_date(month = month, day = day, year = year))
+```
+```{r}
+mdy("August 07, 2000") |>wday(label = TRUE)
+
+
+#mdy("August 07, 2000") |> ceiling_date(unit = "2 month")
+```
+```{r}
+jan31 <- ymd("2013-01-31")
+jan31_t <- ymd_hms("2013-01-31 06:35:27")
+
+#Let's add 27 hours 15 minutes
+jan31_t + hours(27) + minutes(17)
+
+
+#Let's add 1 month
+
+jan31 + days(30)
+```
+```{r}
+x <- ymd_hms("2009-07-01 2:01:59.23")
+quarter(x)
+```
+

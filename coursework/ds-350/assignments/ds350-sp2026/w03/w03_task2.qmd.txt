@@ -1,0 +1,120 @@
+---
+title: "w03_Task2"
+Autor: Fabrice Andre
+---
+```{r}
+library(tidyverse)
+library(mosaic)
+library(ggplot2)
+library(forcats)
+library(plotly)
+```
+
+```{r}
+gundeath <-read.csv("https://raw.githubusercontent.com/fivethirtyeight/guns-data/refs/heads/master/full_data.csv")
+```
+
+
+```{r}
+colnames(gundeath)
+```
+```{r}
+# Explore the data
+head(gundeath)
+```
+
+```{r}
+summary(gundeath)
+```
+```{r}
+# deeper exploration
+skimr::skim(gundeath)
+```
+```{r}
+clean_data <- na.omit(gundeath) 
+
+```
+
+
+```{r}
+# exploration by visualization
+#GGally :: ggpairs(clean_data)
+```
+
+```{r}
+interst_col <- clean_data %>%
+  select(sex, age, race, education)
+```
+
+```{r}
+GGally::ggpairs(interst_col)
+```
+
+```{r}
+interst_col2 <- clean_data %>%
+  select(intent, police, place)
+```
+
+```{r}
+GGally::ggpairs(interst_col2)
+```
+
+```{r}
+interst_col3 <- clean_data %>%
+  select(year, month)
+```
+
+```{r}
+GGally::ggpairs(interst_col3)
+```
+```{r}
+# Start the analysis by trying to see the death by race 
+#Using a Bar Char
+clean_data$race <- fct_infreq(clean_data$race)
+p <-(
+  ggplot(clean_data, aes(x = race,  fill = sex))
+  + geom_bar(position = 'dodge', width = 1)
+  + scale_fill_manual(values = c("M" = "steelblue", "F"= "hotpink"))
+  +theme_bw()
+  + facet_wrap(~intent)
+  + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  +labs(
+    x = "Race", 
+    title = "number of death by race ",
+    y = "Number of death"
+  )
+  
+)
+ggplotly(p)
+```
+```{r}
+# Does the motive for gun violence change as the weather changes,if so, which group should our commercials talk to during each specific season.
+
+season_data <- clean_data %>%
+  mutate(season = case_when(
+  month %in% c(12, 01, 02) ~ "Winter",
+  month %in% c(03, 04, 05) ~ "Spring",
+  month %in% c(06, 07, 08) ~ "Summer",
+  month %in% c(09, 10, 11) ~ "Fall",
+  )) %>%
+  #Ensure seasons appear in order, not alphabetically
+  mutate(season_data = fct_relevel(season, "Spring", "Summer", "Fall", "Winter"))
+
+# create the plot 
+p2 =(
+  ggplot(season_data, aes(x = season, fill = intent))
+  +geom_bar(position = "dodge")
+  
+  +theme_bw()
+  +labs(
+    title = "Seasonal Trends in US Gun Death Intent",
+    x = "Season of the year",
+    y = "Number of death"
+  )
+)
+
+ggplotly(p2)
+
+```
+
+This visualization examines whether the "season of the year" influences the volume or type of gun deaths in the United States.The graph shows that less people commit suicide during winter season, also less homicide during winter season, but winter has more people died in accident compare to  all order season. I wonder if it's becuase it snow so many places in the USA during winter.

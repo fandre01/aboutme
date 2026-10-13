@@ -1,0 +1,179 @@
+---
+title: "Week 5: Polish a Previous Visualization"
+author: Fabrice Andre
+format:
+  html:
+    keep-md: true
+    toc: true
+    toc-float: true
+    code-fold: show
+    fig-height: 6
+    fig-width: 12
+    fig-align: center
+execute:
+  warning: false
+  message: false
+---
+
+## Setup
+
+```{r}
+library(tidyverse)
+library(forcats)
+```
+
+## Load and Clean Data
+
+```{r}
+gundeath <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/guns-data/refs/heads/master/full_data.csv")
+clean_data <- na.omit(gundeath)
+```
+
+---
+
+## 28.3.1 Exercises
+
+### Exercise 1: `geom_text()` with Infinite Positions
+
+Using `-Inf` or `Inf` as coordinates pins the label to the plot edge.
+
+```{r}
+corners <- tibble(
+  x     = c(-Inf, -Inf,  Inf,  Inf),
+  y     = c(-Inf,  Inf, -Inf,  Inf),
+  label = c("Bottom-Left", "Top-Left", "Bottom-Right", "Top-Right"),
+  h     = c(0,    0,     1,     1),
+  v     = c(0,    1,     0,     1)
+)
+
+ ggplot(clean_data, aes(x = age)) +
+  geom_histogram(fill = "steelblue", bins = 30, color = "white") +
+  geom_text(
+    data = corners,
+    aes(x = x, y = y, label = label, hjust = h, vjust = v),
+    size = 4, color = "darkred", fontface = "bold"
+  ) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title    = "Exercise 1: geom_text() Anchored at All Four Corners",
+    subtitle = "Age distribution of gun death victims",
+    x = "Age", y = "Count"
+  )
+```
+
+
+
+### Exercise 2: `annotate()` Without a Tibble
+
+`annotate()` adds text or shapes to a plot without needing to create a data frame first.
+
+```{r}
+ggplot(clean_data, aes(x = age)) +
+  geom_histogram(fill = "steelblue", bins = 30, color = "white") +
+  annotate(
+    "text",
+    x = 80, y = 5800,
+    label = "Peak around\nages 20–25",
+    hjust = 1, size = 4.5,
+    color = "darkred", fontface = "italic"
+  ) +
+  annotate(
+    "segment",
+    x = 62, xend = 28,
+    y = 5400, yend = 4200,
+    arrow = arrow(length = unit(0.3, "cm")),
+    color = "darkred"
+  ) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title    = "Exercise 2: annotate() — No Tibble Required",
+    subtitle = "Age distribution of gun death victims",
+    x = "Age", y = "Count"
+  )
+```
+
+---
+
+## Polished Gun Death Visualizations
+
+## Plot 1: Gun Deaths by Race, Sex, and Intent
+
+```{r}
+#| fig-height: 8
+clean_data$race <- fct_infreq(clean_data$race)
+
+ggplot(clean_data, aes(x = race, fill = sex)) +
+  geom_bar(position = "dodge") +
+  scale_fill_manual(
+    values = c("M" = "steelblue", "F" = "salmon"),
+    labels = c("M" = "Male",      "F" = "Female"),
+    name   = "Sex"
+  ) +
+  facet_wrap(~intent, scales = "free_y") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x      = element_text(angle = 45, hjust = 1, size = 11),
+    plot.title       = element_text(face = "bold", size = 18),
+    plot.subtitle    = element_text(size = 13, color = "gray40"),
+    plot.caption     = element_text(size = 10,  color = "gray50"),
+    strip.text       = element_text(face = "bold", size = 13),
+    legend.position  = "bottom",
+    panel.grid.minor = element_blank()
+  ) +
+  labs(
+    title    = "Gun Deaths by Race and Sex, Faceted by Intent",
+    subtitle = "Males account for the vast majority of gun deaths across all intents and racial groups",
+    caption  = "Data: FiveThirtyEight guns-data (2012–2014)",
+    x        = "Race",
+    y        = "Number of Deaths"
+  )
+```
+
+---
+
+## Plot 2: Seasonal Trends in US Gun Death Intent
+
+```{r}
+season_data <- clean_data %>%
+  mutate(season = case_when(
+    month %in% c(12, 1, 2)  ~ "Winter",
+    month %in% c(3, 4, 5)   ~ "Spring",
+    month %in% c(6, 7, 8)   ~ "Summer",
+    month %in% c(9, 10, 11) ~ "Fall"
+  )) %>%
+  mutate(season = fct_relevel(season, "Spring", "Summer", "Fall", "Winter"))
+
+winter_label <- tibble(
+  season = factor("Winter", levels = c("Spring", "Summer", "Fall", "Winter")),
+  y      = Inf,
+  label  = "Accidents\nslightly higher"
+)
+
+ggplot(season_data, aes(x = season, fill = intent)) +
+  geom_bar(position = "dodge") +
+  geom_text(
+    data= winter_label,
+    aes(x = season, y = y, label = label),
+    inherit.aes = FALSE,
+    vjust = 1.1, size = 3.8,
+    color = "gray20", fontface = "italic"
+  ) +
+  scale_fill_brewer(palette = "Set2", name = "Intent") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title       = element_text(face = "bold", size = 18),
+    plot.subtitle    = element_text(size = 13, color = "gray40"),
+    plot.caption     = element_text(size = 10,  color = "gray50"),
+    legend.position  = "bottom",
+    panel.grid.minor = element_blank()
+  ) +
+  labs(
+    title    = "Seasonal Trends in US Gun Death Intent",
+    subtitle = "Suicide dominates year-round; accidents are slightly more common in winter",
+    caption  = "Data: FiveThirtyEight guns-data (2012–2014)",
+    x        = "Season",
+    y        = "Number of Deaths"
+  )
+```
+
+Suicide is the leading cause of gun death in every season. Accidents are slightly elevated in winter — possibly reflecting more indoor firearm handling during colder months. Homicide peaks in summer. These seasonal patterns could inform the timing of public health campaigns.

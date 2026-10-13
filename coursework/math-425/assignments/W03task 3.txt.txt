@@ -1,0 +1,115 @@
+---
+title: "w03_Task3"
+Autor: Fabrice Andre
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(fig.width = 20, fig.height = 10)
+```
+
+```{r}
+library(tidyverse)
+library(nycflights13)
+library(ggplot2)
+library(mosaic)
+library(forcats)
+library(plotly)
+```
+
+
+##Question 1##
+For each origin airport (JFK, EWR, LGA), which airline has the lowest
+75th percentile of departure delay for flights scheduled to leave earlier than noon?
+
+```{r}
+clean_flights <- flights %>%
+  filter(sched_dep_time < 1200) %>%
+  group_by(origin, carrier) %>%
+  summarise(
+    percentile_delay = quantile(dep_delay, 0.75, na.rm = TRUE)
+  ) %>%
+  ungroup()
+  #select(`sched_dep_time`, origin, carrier)
+```
+```{r}
+p1 = (
+  ggplot(clean_flights, aes(x = origin, y = `percentile_delay`, fill = carrier))
+  + geom_col(position = 'dodge', width = 5)
+  + facet_wrap(~origin, nrow = 1)
+  + labs(
+    title = "75th Percentile of Departure Delays (Flights Before Noon)",
+    y = "75th Percentile Delay (min)",
+    x = "Origin Airport"
+  )
+)
+ggplotly(p1)
+```
+#Responds
+
+This graph help us answer the first question, it clearly show that the origin airport (LGA) for the US airline has the lowest 75th percentile of departure delay for flights that schedule to leave earlier than noon.
+
+
+##Questin 2##
+Which origin airport is best to minimize my chances of a late arrival when I am using Delta Airlines?
+
+```{r}
+# Filter carrier for delta only
+
+delta <- flights %>%
+  filter(carrier == "DL")%>%
+  group_by(origin, arr_delay)%>%
+  select(origin, arr_delay, carrier)
+```
+
+#Graph
+
+```{r}
+p2 = (
+  ggplot(na.omit(delta), aes(x = origin, y= arr_delay, fill= carrier))
+  +facet_wrap(~origin, nrow = 1)
+  + geom_boxplot()
+  + coord_cartesian(ylim = c(-15, 300) )
+  +geom_hline(yintercept = 0, color = "green")
+  + labs(
+    title = "Arrival Delays for Delta by Origin",
+    y = "delay arrival in Minute",
+    x = "Origin Airport"
+  )
+)
+p2
+#ggplotly(p2)
+```
+#Responds
+
+This graph cleary show use if you want to minimize the delay arrival for the DL airline the best option for you is JFK. 
+
+
+##Question 3
+Which destination airport is the worst airport for arrival delays? You decide on the metric for “worst.”
+
+```{r}
+delay <- flights%>%
+  filter(arr_delay >10)%>%
+  group_by(arr_delay, dest)
+```
+
+#Graph
+
+```{r, fig.width=20}
+p3 = (
+  ggplot( delay, aes(x = dest, y = arr_delay, fill = "steelblue") )
+  + geom_col()
+  + theme(axis.text.x = element_text(angle = 45))
+  + geom_hline(yintercept = 292000, color = "blue")
+  + labs(
+    title = "The worst airport for arrival delays",
+    y = "Delay arrival in munites"
+    
+  )
+)
+p3
+
+```
+#Responds 
+This graph clearly show that the worst airport for arrival delay is the ANC airport. I use a blue line to make it easier for people to see the comparaison.

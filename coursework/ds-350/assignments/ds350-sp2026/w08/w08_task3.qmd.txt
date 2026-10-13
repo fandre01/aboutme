@@ -1,0 +1,120 @@
+---
+title: "w08_task3"
+format: html
+fig-column: page
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(USAboundaries)
+library(tidyverse)
+library(buildings)
+library(sf)
+library(geofacet)
+```
+
+
+```{r}
+# Use the library(USAboundaries) package to get two spatial data sets. One for all US states, and the other for counties of a state of your choice (for example, counties of Idaho).
+All_states <- us_states()
+counties <- us_counties(states = "Idaho")
+
+```
+
+
+```{r}
+# let make the single base
+
+single_familly <- permits %>% 
+  filter(variable == "Single Family") 
+  
+```
+
+
+
+
+
+```{r}
+clean_US_States <- All_states %>% 
+  mutate(
+    States = as.integer(statefp)
+  )
+```
+
+
+```{r}
+# For all  US States
+States_permits <- single_familly %>% 
+  group_by(state, year) %>% 
+  summarise(total_value = sum(value, na.rm = TRUE), .groups = "drop" ) %>% 
+  inner_join(clean_US_States, by= join_by(state == States))
+
+```
+
+
+```{r}
+idaho_county <- counties %>% 
+  filter(statefp == "16") %>% 
+  mutate(state_int = as.integer(statefp),
+         country_int = as.integer(countyfp))
+```
+
+
+```{r}
+idaho_permit <- single_familly %>% 
+  filter(state == 16) %>% 
+  inner_join(idaho_county, by=join_by(county== country_int))
+```
+
+
+
+```{r, fig.width=20,fig.height=10}
+#| page: inset
+ggplot(States_permits, aes(x = year, y = total_value)) +
+  geom_line(color = "navy", linewidth = 0.8) +
+  
+  facet_geo(~ state_name, scales = "free_y") +
+  theme_bw() +
+  labs(
+    title = "Single Family Building Permit Trends by State",
+    x = "Year",
+    y = "Total Permits"
+  ) +
+  theme(
+    strip.text = element_text(),
+    axis.text = element_text(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+```
+
+
+```{r, fig.width=20,fig.height=10 }
+#| page: inset
+ggplot(idaho_permit, aes(x = year, y = value)) +
+  geom_line(color = "darkgreen", linewidth = 0.8) +
+  
+  facet_wrap(~ name, scales = "free_y") + 
+  theme_bw() +
+  labs(
+    title = "Idaho Single Family Building Permit Trends by County",
+    subtitle = "Y-axes are independently scaled to highlight localized trends",
+    x = "Year",
+    y = "Permits Issued"
+  ) +
+  theme(
+    strip.text = element_text(size = 15),
+    axis.text = element_text(size = 15)
+  )
+```
+
+
+`Insights and Design Choices`
+
+`Data Insights`
+
+These charts show a very interesting story about the housing market. For most of the United States, we can see a huge boom in building permits that peaked around 2004 or 2005, followed by a sharp crash when the economy went down around 2008. But if we look at the Idaho chart, its housing boom actually peaked a little later, around 2006 and 2007. At the county level in Idaho, big counties like Ada and Canyon saw massive spikes and drops. Interestingly, many smaller rural counties did not stay flat; they experienced their own jagged ups and downs, but on a much smaller scale.
+
+`Visualization Design Choices` 
+
+I made specific choices to make this data easy for a reporter to read. First, I used `geofacet` for the US states chart. This keeps the states in a layout that looks like a map of the United States, so it is easy to see regional patterns. For the Idaho counties, I used `facet_wrap` in a clean grid. Because big states and big counties build so many houses, they would normally make the smaller areas look like flat lines if they shared the same scale. To fix this big difference, I used `scales = "free_y"` for both charts. This gives each individual plot its own independent Y-axis scale so we can easily compare the timing and shape of the market's rise and fall everywhere.
+

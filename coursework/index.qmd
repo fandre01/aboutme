@@ -1,0 +1,14 @@
+---
+title: "Coursework"
+description: "Selected data science and computing coursework, organized by class."
+---
+
+This section organizes my coursework by class. The archived files are provided as downloadable source files so visitors can inspect the work without making the site execute course assignments during the build.
+
+## Classes
+
+- [DS 250](ds-250/index.qmd): Data programming assignments and practice work.
+- [MATH 425](math-425/index.qmd): Mathematical and statistical work.
+- [DS 350](ds-350/index.qmd): Statistical computing, visualization, and data analysis assignments.
+- [DS 325](ds-325/index.qmd): Coursework folder found, awaiting source files.
+- CS 450: Work not found in the Documents folder yet.

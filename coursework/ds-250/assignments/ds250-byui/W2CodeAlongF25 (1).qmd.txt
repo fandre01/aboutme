@@ -1,0 +1,134 @@
+---
+title: "Client Report - Exploring Names"
+subtitle: "Unit 1 Task 1"
+author: "Simon Sung"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+### Week 2 Class 1 and 2 — Code-Along Version
+# This file is for students to follow along in class.
+# Run each section step by step and pause for discussion.
+```{python}
+# --- Warm-up: Printing and simple math ---
+print("hello world")
+
+x = 2 + 2
+print(x)
+```
+```{python}
+# --- Importing libraries ---
+import pandas as pd
+import numpy as np
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+```{python}
+# --- Reading in the dataset ---
+# Life expectancy dataset
+url = "https://byui-cse.github.io/cse110-course/lesson11/life-expectancy.csv"
+df = pd.read_csv(url)
+```
+```{python}
+# Let’s look at the dataset
+# (What do you notice about the first few rows?)
+df.head()
+```
+```{python}
+# --- Exploring the dataset ---
+# What is the shape of the dataset?
+df.shape
+# How many total entries are there?
+df.size
+# What are the column names?
+df.columns
+# Look at the last few rows
+df.tail()
+# What kinds of data are in each column?
+df.info()
+# Summary statistics of numeric columns
+df.describe()
+```
+```{python}
+# --- Questions to answer ---
+# How many countries are in the dataset?
+df['Entity'].nunique()
+df['Code'].nunique()
+# What years are included? (Minimum and maximum)
+df['Year'].min()
+df['Year'].max()
+```
+```{python}
+# --- Subsetting the dataset ---
+# Select specific columns
+new = df[['Entity', 'Code']]
+# Select the first 2 rows
+new[:2]
+# Select a slice of the 'Year' column
+df['Year'][0:3]
+# --- Using loc (label-based selection) ---
+df.loc[11:23, 'Year']
+# --- Using iloc (position-based selection) ---
+df.iloc[11:24, 2]
+```
+```{python}
+# --- Conditional filtering ---
+# Which rows are for Japan?
+df[df['Entity'] == 'Japan']
+# Which rows are for France, Japan, or El Salvador?
+df[df['Entity'].isin(['France', 'Japan', 'El Salvador'])]
+# Using query syntax
+df.query('Entity == "Japan"')
+
+df.query('Entity == ["France", "Japan", "El Salvador"]')
+ # everything except France
+df.query('Entity != "France"')
+```
+```{python}
+# --- Practice Task ---
+# Get a dataset of just the United States.
+usa = df.query('Entity == "United States"').rename(columns={'Life expectancy (years)':'Life'})
+```
+```{python}
+# --- Visualization ---
+# Histogram of life expectancy in the USA
+(
+    ggplot(data=usa, mapping=aes(x='Life')) +
+    geom_histogram()
+)
+
+# Line plot of life expectancy in the USA
+
+
+# Filter to years after 1900
+
+
+# Line plot with x-axis limited to 1900–2020
+
+(
+    ggplot(data = usa)+
+    geom_line(mapping = aes(x = 'Year', y = 'Life'))+
+    scale_x_continuous(limits = [1900,2020])+
+    geom_text(x = 1920, y=47, label = "Spanish Flu", hjust = "left")+
+    geom_segment(x = 1960, y=60, xend = 1943, yend = 64, arrow = arrow(),color = "red")
+
+)

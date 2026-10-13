@@ -1,0 +1,92 @@
+---
+title: "w03_Task3"
+Autor: Fabrice Andre
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(fig.width = 20, fig.height = 10)
+```
+
+```{r}
+library(tidyverse)
+library(nycflights13)
+library(ggplot2)
+library(forcats)
+library(plotly)
+```
+
+
+##Questin 2##
+Which origin airport is best to minimize my chances of a late arrival when I am using Delta Airlines?
+
+```{r}
+# Filter carrier for delta only
+
+delta <- flights %>%
+  filter(carrier == "DL")%>%
+  group_by(origin, arr_delay)%>%
+  select(origin, arr_delay, carrier)
+```
+
+
+```{r}
+# The visualization
+p2 = (
+  ggplot(na.omit(delta), aes(x = origin, y= arr_delay, fill= carrier))
+  +facet_wrap(~origin, nrow = 1)
+  + geom_boxplot()
+  + coord_cartesian(ylim = c(-15, 300) )
+  +geom_hline(yintercept = 0, color = "green")
+  + labs(
+    title = "Arrival Delays for Delta by Origin",
+    y = "delay arrival in Minute",
+    x = "Origin Airport"
+  )
+)
+p2
+
+```
+#Responds
+
+This graph cleary show use if you want to minimize the delay arrival for the DL airline the best option for you is JFK. 
+
+
+##Question 3
+Which destination airport is the worst airport for arrival delays? You decide on the metric for “worst.”
+
+```{r}
+worst_arrival_airports <- flights %>%
+  group_by(dest) %>%
+  summarise(
+    total_fligts = n(),
+    avg_arr_delay = mean(arr_delay, na.rm = TRUE) 
+    
+  ) %>%
+  filter(total_fligts >= 100) %>%
+  arrange(desc(avg_arr_delay))
+```
+
+```{r}
+df =(
+  worst_arrival_airports %>%
+  head(10) %>%
+  ggplot(aes(x = reorder(dest, avg_arr_delay), y = avg_arr_delay )) +
+  geom_col(fill = "steelblue")+
+  coord_flip()
+   + labs(
+    title = "Top 10 Worst Destination Airports for Arrival Delays",
+    subtitle = "Flights departing NYC in 2013 (Minimum 100 flights)",
+    x = "Destination Airport",
+    y = "Average Arrival Delay (minutes)"
+  ) +
+  theme_minimal()
+)
+ggplotly(df)
+```
+
+#Reponds
+The graph clearly shows that the worst destination for arrival delays is CAE airport, with an average arrival delay of about 42 minutes. I defined the 'worst' airport by calculating the average (mean) of the arrival delays
+
+
+

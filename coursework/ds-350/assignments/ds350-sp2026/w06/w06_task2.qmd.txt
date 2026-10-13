@@ -1,0 +1,92 @@
+---
+title: "w06_task2"
+author: "Fabrice Andre"
+format:
+  html:
+    keep-md: true
+    toc: true
+    toc-float: true
+    code-fold: true
+    fig-height: 6
+    fig-width: 12
+    fig-align: center
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+library(Lahman)
+library(priceR)
+library(tidyverse)
+```
+
+
+```{r}
+
+utah_baseball_mutated <- CollegePlaying |> 
+  # Join with Schools to get full school names, and filter for UT
+  inner_join(Schools, by = "schoolID") |> 
+  filter(state == "UT") |> 
+  
+  # Drop the college yearID 
+  select(-yearID) |> 
+  #avoid duplucates
+  distinct(playerID, .keep_all = TRUE) |>
+  
+  # Join with People to get First and Last names
+  inner_join(People, by = "playerID") |> 
+  
+  # Join with Salaries on playerID 
+  inner_join(Salaries, by = "playerID") |> 
+  
+  # Clean up columns (combining names and selecting what we need)
+  mutate(player_name = paste(nameFirst, nameLast)) |> 
+  select(school_name = name_full, player_name, yearID, salary)
+
+
+```
+
+```{r}
+# Adjusting earnings to 2021 dollars
+utah_baseball_clean <- utah_baseball_mutated |> 
+  mutate(
+    adjusted_salary = adjust_for_inflation(
+      price = salary, 
+      from_date = yearID, 
+      country = "US", 
+      to_date = 2021
+    ),
+    # Create a clean categorical grouping for the plot
+    school_group = if_else(school_name == "Brigham Young University", "BYU", "Other Utah Schools")
+  )
+
+
+head(utah_baseball_clean)
+```
+
+```{r}
+ggplot(utah_baseball_clean, aes(x = school_group, y = adjusted_salary, fill = school_group)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6, color = "black") + 
+  geom_jitter(width = 0.2, alpha = 0.4, aes(color = school_name)) +
+  scale_y_continuous(labels = scales::dollar_format()) +
+  labs(
+    title = "Do BYU Baseball Alumni Earn More in the Majors?",
+    subtitle = "Comparing inflation-adjusted professional salaries against other Utah institutions",
+    x = "Group",
+    y = "Salary (Adjusted to 2021 USD)",
+    color = "Specific School",
+    fill = "Group"
+  ) +
+  
+  guides(color = guide_legend(nrow = 3, byrow = TRUE)) + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "bottom",
+    legend.box = "vertical" 
+  )
+```
+Based on the graph, we can see a clear difference between professional baseball players from BYU and players from other Utah schools. The median salary for BYU alumni is much higher, sitting around $2.2 million dollars. Also, the pink box for BYU is very large, which means their players have a wide mix of earnings. Some BYU players make close to the league minimum, but many of them make a lot of money, with several top players reaching up to $10 million dollars or more.
+
+For the other Utah schools, the blue box is very flat and sits very low on the graph. This shows that the vast majority of players from these schools earn much less money, usually staying down near the league minimum. There are only a few exceptions—shown by the green dots from Dixie State College of Utah—who made higher salaries between $4 million and $6.5 million dollars. In conclusion, the data shows that going to BYU gives baseball players a much better chance of earning higher salaries in the professional leagues compared to other schools in Utah.

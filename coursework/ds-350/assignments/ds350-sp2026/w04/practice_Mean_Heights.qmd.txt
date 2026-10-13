@@ -1,0 +1,100 @@
+---
+title: "Practice_country"
+---
+
+---
+title: "Week 3 Tibbles and Data Structures"
+output: 
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: show
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+```
+
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+# This skips the blank space and reads the true headers directly
+heights_raw <- read_excel("c:/users/andre/Downloads/Height.xlsx", skip = 2)
+
+heights_raw
+```
+
+```{r}
+# Let's clean up the column names and pivot the years
+country_data <- heights_raw %>% 
+  rename(country = `Continent, Region, Country`) %>% 
+  pivot_longer(
+    cols = `1800`:`2011`,
+    names_to = "year",
+    values_to = "height.cm"
+  )
+country_data
+```
+
+```{r}
+tidy_heights <- country_data %>% 
+  # Drop rows where height is missing
+  filter(!is.na(height.cm)) %>% 
+  # Convert year to a number so we can calculate decades
+  mutate(
+    year = as.numeric(year),
+    year_decade = (year %/% 10) * 10
+  ) %>% 
+  # Group by country and decade to find the mean height requested
+  group_by(Code, country, year_decade) %>% 
+  summarize(height.cm = mean(height.cm, na.rm = TRUE), .groups = "drop") %>%
+
+  select(Code, country, year_decade, height.cm) %>%
+  arrange(country)
+tidy_heights
+```
+
+
+
+```{r}
+
+
+
+ggplot(data = tidy_heights, aes(x = year_decade, y = height.cm / 2.54)) +
+  # all countries shown in soft, light gray points
+  geom_point(color = "gray", alpha = 0.5, size = 1.5) +
+  # Highlight layer: Germany's points emphasized with distinct colors
+  geom_point(data = germany_highlights, aes(color = country), size = 2.5, alpha = 0.9) +
+  # Add trend lines for Germany to show historical continuity clearly
+  geom_line(data = germany_highlights, aes(color = country, group = country), linewidth = 0.8) +
+  # Apply professional formatting and clear labeling
+  scale_color_manual(values = c("#1f77b4", "#ff7f0e", "#2ca02c")) +
+  scale_x_continuous(breaks = seq(1800, 2000, by = 20)) +
+  labs(
+    title = "Global Mean Heights Over Time",
+    subtitle = "Highlighting secular growth trends in Germany (Inches)",
+    x = "Decade",
+    y = "Mean Height (Inches)",
+    color = "Historical Entity"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14, margin = margin(b = 6)),
+    plot.subtitle = element_text(color = "gray30", margin = margin(b = 15)),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_text(margin = margin(t = 10)),
+    axis.title.y = element_text(margin = margin(r = 10))
+  )
+```
+
+
+
+

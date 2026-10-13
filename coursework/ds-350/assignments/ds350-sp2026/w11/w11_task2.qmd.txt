@@ -1,0 +1,85 @@
+---
+title: "w11_task2"
+format:
+  html:
+    embed-resources: true
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(scales)
+library(patchwork)
+library(pander)
+```
+
+```{r, warning=FALSE, message=FALSE}
+# Read the data
+scripture <- read_csv("https://raw.githubusercontent.com/beandog/lds-scriptures/master/csv/lds-scriptures.csv")
+
+savior_name <- read_rds("https://byuistats.github.io/M335/data/BoM_SaviorNames.rds") 
+
+```
+
+
+```{r}
+# firt let try to sort by descanding length so regex matches longer names 
+savior_name_sorted <- savior_name %>% 
+  mutate(name_len = nchar(name)) %>% 
+  arrange(desc(name_len))
+
+
+savior_pattern <- str_flatten(savior_name_sorted$name, collapse = "|")
+```
+
+
+```{r}
+# let's filter to Book of Mormon, group by book, and nest scriptures
+scriptures_nested <- scripture %>% 
+  filter(volume_title == "Book of Mormon") %>% 
+  group_by(book_title) %>% 
+  summarise(full_text = str_c(scripture_text, collapse = " "))
+
+```
+
+
+
+```{r}
+#Let calculate word distences using nested map
+scriptures_processed <- scriptures_nested %>% 
+  mutate(word_counts = map(full_text, function(text) {
+    text %>% 
+      str_split(pattern = savior_pattern) %>% 
+      unlist() %>% 
+      str_count(pattern = "\\w+") %>% 
+      as_tibble() %>% 
+      rename(word_distance = value)
+  })) %>% 
+  select(book_title, word_counts) %>% 
+  unnest(cols = c(word_counts))
+```
+
+
+```{r plot, fig.width=10, fig.height=7}
+
+ggplot(data = scriptures_processed, 
+       aes(x = word_distance, 
+           y = fct_reorder(book_title, word_distance, .fun = median), 
+           fill = book_title)) +
+  geom_boxplot(color = "black", outlier.alpha = 0.4) + 
+  coord_cartesian(xlim = c(0, 350)) + 
+  labs(
+    title = "Distribution of Distance Between Savior Names by Book",
+    
+    x = "Number of Words Between Mentions", 
+    y = ""
+  ) +
+  guides(fill = "none") +
+  theme_bw() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.text = element_text(size = 10)
+  )
+```
+This boxplot shows how frequently the Savior is mentioned across the different books of the Book of Mormon, and the results clearly show that Christ is the central focus of the entire record. In almost every book, the median distance between references to the Savior is fewer than 40 words, with books like Moroni and Mormon having the tightest spacing at around 15 to 20 words. On the other end, Jarom has the largest median gap between mentions at about 75 words. While most of the text keeps these references very close together, we can see long-tail outliers extending past 150 words in larger books like Alma and Helaman, which represent longer historical passages or war chapters where the narrative temporarily shifts away from direct teaching.
+
+

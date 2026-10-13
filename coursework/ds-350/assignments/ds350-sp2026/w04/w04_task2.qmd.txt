@@ -1,0 +1,93 @@
+---
+title: "Week 3 Tibbles and Data Structures"
+output: 
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: show
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+```
+
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(plotly)
+
+countries_data <- read_excel("c:/users/andre/Downloads/Height.xlsx", skip = 2) 
+
+#countries_data
+```
+
+
+# Try
+```{r}
+countries <-countries_data %>%
+rename(country = `Continent, Region, Country`)
+countries
+```
+
+```{r}
+dt_country <-countries %>%
+  pivot_longer(cols = `1800`: `2011`, names_to = "year_decade", values_to = "height.cm")
+dt_country
+```
+
+```{r}
+# Take out all the Na s
+df_country <- dt_country %>%
+filter(!is.na(height.cm))
+df_country
+```
+
+
+```{r}
+# 1. Convert the dataset to inches
+convert_height <- df_country %>%
+  mutate(height_inches = height.cm / 2.54) %>%
+  select(Code, country, year_decade, height_inches)
+```
+
+```{r}
+# Create germany_data after the conversion so it has the new column
+germany_data <- convert_height %>%
+  filter(country == "Germany") # Use the exact name from your dataset
+```
+
+```{r}
+# 3. Build the plot
+df = (
+  ggplot(convert_height, aes(x = year_decade, y = height_inches))
+  + geom_point(color = "gray", alpha = 0.5, size = 1.5) 
+  + geom_line(
+      data = germany_data, 
+      aes(group = country), 
+      color = "red", 
+      linewidth = 1.5
+    )
+  + geom_point(
+      data = germany_data, 
+      aes(group = country),
+      color = "blue", 
+      size = 3
+    )
+  + labs(
+      title = "Height Trends by Decade",
+      x = "Year Decade",
+      y = "Height in Inches"
+    )
+)
+
+ggplotly(df)
+
+```
+The data shows that people are getting taller over the years. In the 1800s, most countries had short average heights that were close together. For example, in the 1810s, the average height in Germany was around 66 inches. But by the late 1900s, people in Germany and all over the world grew much taller, reaching over 71 inches. This change happened because of better food for children, better medicine, and better lives. The data tells a clear story: as life gets better, people grow taller.

@@ -1,0 +1,51 @@
+library(tidyverse)
+library(ggplot2)
+iris
+# First Variable is Species
+# For discrit variable a  good starding poin is geom_bar or geom_col
+
+(
+  ggplot(iris, aes(x=Species))
+  +geom_bar(fill= c("2", "4", "3"))
+  
+  +labs(
+    title = "The Chart show the species level"
+    
+  )
+)
+
+# Second Variable is Countinuos: Petal.Length
+
+(
+  ggplot(iris, aes(x = Petal.Length))
+  + geom_histogram(color = "white", fill = 'red')
+  +labs(
+    title = "The histogram of the Petal Length"
+  )
+)
+
+
+ (
+  ggplot
+  (iris, aes(x = Petal.Length, fill = Species))
+  + geom_density()
+  +scale_x_continuous(transform = "log")
+  #+scale_x_log10()
+  +labs(
+    title = "The density of the Petal Length"
+    
+    
+  )
+  
+) 
+
+(
+  ggplot
+  (iris, aes(y = Petal.Length, x = Species, fill = Species))
+  + geom_boxplot()
+  #+ scale_color_manual(values = c("red", "skyblue", "yellow"))
+) 
+    
+  
+
+

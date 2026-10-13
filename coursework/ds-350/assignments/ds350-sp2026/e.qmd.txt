@@ -1,0 +1,44 @@
+---
+title: "Untitled"
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(downloader)
+```
+
+```{r}
+download("https://github.com/byuistats/data/raw/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.xlsx", 
+destfile = "dow..xlsx" , mode = "wb")
+```
+```{r}
+read_excel("dow..xlsx")
+```
+```{r}
+#Let't download it to a tempfile
+
+bob <- tempfile()
+
+download("https://github.com/byuistats/data/raw/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.xlsx", 
+destfile = bob , mode = "wb")
+```
+```{r}
+# Let's download a zip file
+bob1 <- tempfile()
+
+bob_dir <- tempdir()
+
+download("https://byuistats.github.io/BYUI_M221_Book/Data/ExcelSpreadsheets.zip", destfile = bob1, 
+         mode = "wb")
+```
+```{r}
+bob1
+unzip(bob1, exdir = bob_dir)
+read_excel(paste(bob_dir, "CategoricalDataAnalysis_Hat.xlsx", sep = "/"))
+```
+
+```{r}
+dfa <- filter(!is.na(col))
+```
+

@@ -1,0 +1,97 @@
+---
+title: "Client Report - What's in a Name?"
+subtitle: "Unit 1 Task 2"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd
+import numpy as np
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+```{python}
+# Learn morea about Code Cells: https://quarto.org/docs/reference/cells/cells-jupyter.html
+
+# Include and execute your code here
+df = pd.read_csv("https://github.com/byuidatascience/data4names/raw/master/data-raw/names_year/names_year.csv")
+```
+
+## QUESTION 1
+
+<!-- Make sure at least one of your charts includes reference marks!! -->
+
+__How does your name at your birth year compare to its use historically? Your must provide a chart. The years labels on your charts should not include a comma.__ 
+
+_The chart shows that the name Andre had varying popularity through the decades.
+The red dashed line marks my birth year (2000). Around that time, the name was moderately popular compared to its earlier peaks in the 1980s.
+Historically, it appears that Andre was never among the top-used names but maintained steady usage, indicating lasting appeal over time._
+
+```{python}
+# Q1
+my_name = df.query('name == "Andre"')
+#Count how often your name appears per year
+trend = my_name.groupby('year', as_index=False)['Total'].sum()
+(
+    ggplot(trend, aes(x= 'year', y = 'Total'))
+    + geom_line(color='blue')
+    
+    + scale_x_continuous(limits=[1950, 2020], format='d')
+    + geom_vline(xintercepts= 2000, color= 'red', linetype='')
+    
+)
+
+
+        
+
+```
+
+
+## QUESTION 2
+
+__If you talked to someone named Brittany on the phone, what is your guess of his or her age? What ages would you not guess? Try to justify your answer with whatever statistics knowledge you have. You must provide a chart. The years labels on your charts should not include a comma.__  
+
+_The chart shows that the name Brittany became very popular during the 1980s and peaked around 1990.
+If I met someone named Brittany today (in 2025), I would guess she is around 30–40 years old, since that’s when the name was most common.
+I would not guess she’s under 20 or over 50, because the name was rarely used before 1975 or after 2005.
+Statistically, this reasoning is based on the assumption that the probability of a name corresponds to the frequency of births by year._
+
+```{python}
+# Q2
+brittany = df.query('name == "Brittany"')
+
+trend = brittany.groupby('year', as_index=False)['Total'].sum()
+(
+    ggplot(trend, aes(x='year', y='Total'))
+    + geom_line(color='blue')
+    + labs(title="Brittany", x='year', y='Total')
+    + scale_x_continuous(limits=[1950, 2020], format='d')
+)
+
+```
+
+
+<!-- Make sure at least one of your charts includes reference marks!! -->

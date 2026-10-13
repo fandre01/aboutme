@@ -1,0 +1,25 @@
+---
+title: "Untitled"
+---
+
+```{r}
+library(tidyverse)
+library(nycflights13)
+```
+
+```{r}
+glimpse(planes)
+
+df <- planes %>% mutate(age = 2013 - year) %>%
+  inner_join(flights, by = "tailnum") %>%
+  rename(mnf_yr = year.x,
+         year_flight = year.y)
+```
+
+```{r}
+#Bring in the latituade and longtitude of the destination
+
+df %>% left_join(airports, by = c('origin'= 'faa' )) %>% glimpse() %>%
+  left_join(airports, by = c('dest' = 'faa'), suffix =  c('origin', '_dest')) %>% glimpse()
+```
+

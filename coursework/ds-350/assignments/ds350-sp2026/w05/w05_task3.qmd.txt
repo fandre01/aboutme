@@ -1,0 +1,60 @@
+
+---
+title: "Week 5: Polish a Previous Visualization"
+author: Fabrice Andre
+
+---
+
+```{r}
+library(tidyverse)
+library(haven)
+library(foreign)
+```
+
+```{r}
+df <- unzip("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w05/child-mortality.zip", exdir = "C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w05/child-mortality" )
+df
+```
+
+```{r}
+df1 <- read.csv("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w05/child-mortality/child-mortality.csv")
+
+```
+
+
+```{r}
+df2 <- df1 %>%
+  filter(Year >= 1933, Year <= 2023)%>%
+  filter(!is.na(`Under.five.mortality.rate..selected.`), !is.na(Entity)) %>%
+  select(Year, Code, Entity, `Under.five.mortality.rate..selected.` ) 
+  
+
+```
+
+```{r}
+windowsFonts("Comic Sans MS" = windowsFont("Comic Sans MS"))
+
+df2 %>%
+  filter(Entity %in% c("United States", "China", "India", "Brazil", "Nigeria")) %>%
+  ggplot(aes(x = Year, y = `Under.five.mortality.rate..selected.`, color = Entity)) +
+  geom_line(linewidth = 5, linetype = "dotdash") +
+  geom_point(size = 8, shape = 8) +
+  
+  scale_color_manual(values = c("red", "cyan", "green", "orange", "pink")) +
+  labs(
+    title = "DETHS OF CHILDRUN (so sad!!!)",
+    x = "THE YEAR",
+    y = "HOW MANY KIDS DIED"
+  ) +
+  theme(
+    plot.background  = element_rect(fill = "yellow", color = "red", linewidth = 8),
+    panel.background = element_rect(fill = "cyan"),
+    panel.grid.major = element_line(color = "orange", linewidth = 2),
+    plot.title  = element_text(family = "Comic Sans MS", color = "darkgreen", size = 28),
+    axis.text.x = element_text(angle = 45, color = "magenta", size = 14),
+    axis.text.y = element_text(angle = 45, color = "blue", size = 14)
+  )
+
+```
+
+

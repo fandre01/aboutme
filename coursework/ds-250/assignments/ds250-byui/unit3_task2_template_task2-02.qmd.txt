@@ -1,0 +1,199 @@
+---
+title: "Client Report - Weather Delays"
+subtitle: "Unit 3 Task 2"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+import sqlite3
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+df_dirty = pd.read_json("https://github.com/byuidatascience/data4missing/raw/master/data-raw/flights_missing/flights_missing.json")
+df_dirty.head()
+```
+
+_First I went over to the data viewer, I found these mistakes. _
+
+airport_name: Blank  
+num_of_delays_carrier: 1500+,(wrong data type)
+num_of_delays_late_aircraft: -999, (wrong data type)
+minssutes_delayed_nas: -999, need to be fix
+
+_I replace blank with np.nan. I replace -999 with np.nan
+I replace 1500+ to 1500 because can be at leat 1500.
+
+
+
+```{python}
+df = df_dirty
+df.airport_name = df.airport_name.replace("", np.nan)
+df.num_of_delays_carrier = df.num_of_delays_carrier.replace("1500+", 1500).astype(int)
+df.num_of_delays_late_aircraft = df.num_of_delays_late_aircraft.replace(-999, np.nan)
+df.minutes_delayed_nas = df.minutes_delayed_nas.replace(-999, np.nan)
+df.head()
+```
+
+```{python}
+# fill all the missing value in the airport_name
+df_filler = df[["airport_code", "airport_name"]].sort_values("airport_code", ascending=True).ffill()
+
+df_filler = df_filler.sort_index()
+
+df["airport_name"] = df_filler["airport_name"]
+df
+
+#fill all missing data in the year columns
+df_filler = df[["airport_code", "year"]].sort_values("airport_code", ascending=True).ffill()
+
+df_filler = df_filler.sort_index()
+
+df["year"] = df_filler["year"]
+df
+
+#fill all the missing value in num_of_delays_late_aircraft
+df_filler = (
+    df[["airport_code", "num_of_delays_late_aircraft"]]
+      .sort_values("airport_code", ascending=True)
+      .ffill()
+      .bfill()
+)
+
+df_filler = df_filler.sort_index()
+df["num_of_delays_late_aircraft"] = df_filler["num_of_delays_late_aircraft"]
+df
+
+#fill all missing value in minutes_delayed_carrier 
+df_filler = df[["airport_code", "minutes_delayed_carrier"]].sort_values("airport_code", ascending=True).ffill()
+
+df_filler = df_filler.sort_index()
+
+df["minutes_delayed_carrier"] = df_filler["minutes_delayed_carrier"]
+df
+
+#fill all missing value in minutes_delayed_carrier 
+df_filler = df[["airport_code", "minutes_delayed_carrier"]].sort_values("airport_code", ascending=True).ffill()
+
+df_filler = df_filler.sort_index()
+
+df["minutes_delayed_carrier"] = df_filler["minutes_delayed_carrier"]
+df
+```
+
+```{python}
+#fill all missing value in minutes_delayed_nas
+
+df_filler = df[["airport_code", "minutes_delayed_nas"]].sort_values("airport_code", ascending=True).ffill()
+
+df_filler= df_filler.sort_index()
+
+df["minutes_delayed_nas"] = df_filler["minutes_delayed_nas"]
+df
+```
+
+## QUESTION 1
+
+1. __Which airport has the worst delays?__ Describe the metric you chose, and why you chose it to determine the “worst” airport. Your answer should include a summary table that lists (for each airport) the total number of flights, total number of delayed flights, proportion of delayed flights, and average delay time in hours. 
+
+_I think ORD is the worst airport because it has the highest average delays._
+
+```{python}
+# Include and execute your code here
+df_agg = df.groupby("airport_code").agg(
+  totalflights = ("num_of_flights_total","sum"),
+  totaldelays = ("num_of_delays_total", "sum"),
+  average_delay_hours= (("minutes_delayed_total", "mean") 
+)
+)
+df_agg["percentage_delays"] = round(df_agg['totaldelays'] / df_agg['totalflights'],2)
+
+df_agg["average_delay_hours"] =round(df_agg['average_delay_hours'] / 60, 2)
+df_agg.iloc[:,1:2]
+
+```
+
+
+## QUESTION 2
+
+According to the BTS website, the “Weather” category only accounts for severe weather delays. Mild weather delays are not counted in the “Weather” category, but are actually included in both the “NAS” and “Late-Arriving Aircraft” categories. __Your job is to create a new column that calculates the total number of flights delayed by weather (both severe and mild).__ You will need to replace all the missing values in the Late Aircraft variable with the mean. Show your work by printing the first 5 rows of data in a table. Use these three rules for your calculations:  
+
+    a. 100% of delayed flights in the Weather category are due to weather  
+    a. 30% of all delayed flights in the Late-Arriving category are due to weather  
+    a. From April to August, 40% of delayed flights in the NAS category are due to weather. The rest of the months, the proportion rises to 65%  
+
+_I calculated the real number of weather-related delays by including both severe and mild weather. First, I filled the missing values in the Late-Arriving Aircraft column with the mean so the data would be accurate. Then I combined the delays using the rules:
+
+100% of Weather delays
+
+30% of Late-Arriving Aircraft delays
+
+NAS delays counted as 40% from April–August and 65% in other months._
+
+```{python}
+# Include and execute your code here
+df2 = df
+
+df2['total_column'] = (
+    df["num_of_delays_weather"] +
+    (df["num_of_delays_nas"] * np.where(df["month"].isin(['April', 'May', 'June', 'July', 'August']), 0.40, 0.65) +
+    df["num_of_delays_late_aircraft"] * .30)
+)
+df2 = df2.groupby("airport_code").agg(
+  total_number_of_flights_delayed = ("total_column", "mean")
+).reset_index()
+df2
+
+```
+
+
+## Question 3
+
+__Using the new weather variable calculated above, create a barplot showing the proportion of all flights that are delayed by weather at each airport. Describe what you learn from this graph.__  
+
+_This bar plot shows the proportion of flights at each airport that are delayed because of weather, using the new weather delay variable we created. From the graph, I can see that some airports experience weather delays much more often than others. Airports with higher bars have a greater percentage of their flights affected by both severe and mild weather. This suggests that weather impacts airports differently depending on their location and climate. In general, the plot makes it easy to compare which airports struggle the most with weather-related delays._
+
+```{python}
+# Include and execute your code here
+
+p=(
+  ggplot(df2, aes(x="airport_code", fill="airport_code", y='total_number_of_flights_delayed')) +
+  geom_bar(stat="identity") +
+
+    labs(
+      title="Proportion of Flights Delayed by Weather per Airport",
+      x="Airport",
+      y="Proportion of Flights Delayed"
+  )
+  
+)
+  
+p.show()
+
+```

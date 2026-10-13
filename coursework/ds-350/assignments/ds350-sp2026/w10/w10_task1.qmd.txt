@@ -1,0 +1,56 @@
+---
+title: "w10_task1"
+format: html
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(stringr)
+library(tidyverse)
+library(pander)
+```
+
+
+```{r}
+letters_file  <- readr::read_lines("https://byuistats.github.io/M335/data/randomletters.txt")
+numbers_file  <- readr::read_lines("https://byuistats.github.io/M335/data/randomletters_wnumbers.txt")
+
+string1 <- str_c(letters_file, collapse = "")
+string2 <- str_c(numbers_file, collapse = "")
+```
+
+```{r}
+n <- str_length(string1)
+idx <- c(1, seq(1700, n, by = 1700))
+
+quote <- str_sub(string1, idx, idx) %>%
+  str_c(collapse = "") %>%
+  str_extract("^.*?\\.")
+
+quote
+
+```
+```{r}
+numbers_raw <- read_lines("https://byuistats.github.io/M335/data/randomletters_wnumbers.txt")
+string2 <- str_c(numbers_raw, collapse = "")
+string2  
+```
+
+
+
+
+```{r}
+hidden_numbers <- str_extract_all(string2, "[0-9]+")[[1]] %>% as.integer()
+
+message <- letters[hidden_numbers] %>% str_c(collapse = "")
+message
+
+```
+
+```{r}
+clean_string <- str_remove_all(string1, "[ .]")
+vowel_runs <- str_extract_all(clean_string, "[aeiouAEIOU]+")[[1]]
+longest_vowel_run <- vowel_runs[which.max(str_length(vowel_runs))]
+longest_vowel_run
+
+```
+

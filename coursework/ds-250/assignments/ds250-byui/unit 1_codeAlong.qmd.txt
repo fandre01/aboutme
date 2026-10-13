@@ -1,0 +1,97 @@
+---
+title: "Unit 2 Code Along"
+format: html
+---
+```{python}
+import pandas as pd
+import numpy as np
+import sqlite3
+from lets_plot import *
+LetsPlot.setup_html(isolated_frame=True)
+```
+```{python}
+# Learn morea about Code Cells: https://quarto.org/docs/reference/cells/cells-jupyter.html
+# Include and execute your code here
+sqlite_file = 'lahmansbaseballdb.sqlite'
+# this file must be in the same location as your .qmd or .py file
+con = sqlite3.connect(sqlite_file)
+
+```
+
+```{python}
+
+q = 'SELECT * FROM allstarfull LIMIT 5'
+results = pd.read_sql_query(q, con)
+
+results
+```
+```{python}
+q ='''
+    SELECT  playerID,
+            G as 'Games managed',
+            W as 'Wins',
+            L as 'Losses',
+            round((W*1.0/G), 3) as 'Win %',
+            yearID,
+            teamID
+
+    FROM managers
+    WHERE (G > 10 AND yearID > 1950)
+    ORDER BY   "Win %" DESC, G DESC
+    
+    '''
+managers = pd.read_sql_query(q, con)
+managers
+
+
+```
+## QUESTION 1
+__Write an SQL query that provides playerID, yearID, and batting average for players with at least 1 at bat that year. Sort the table from highest batting average to lowest, and then by playerid alphabetically. Show the top 5 results in your report.__
+
+```{python}
+q ='''
+    SELECT playerID,
+            H as 'Hits',
+            AB as 'At Bats',
+            round((H*1.0/AB),3) as 'Batting Average',
+            yearID,
+            teamID
+
+    FROM batting
+    WHERE (AB > 500 AND yearID >1940) 
+    ORDER BY  "Batting Average" DESC, playerID DESC
+    LIMIT 5
+    '''
+BestBatting = pd.read_sql_query(q, con)
+BestBatting
+```
+
+
+# Let's join
+Of the schools that producx MBS
+```{python}
+q ='''
+    SELECT *
+    FROM schools
+    LEFT JOIN parks On schools.city = parks.city
+    WHERE schools.city = "Los Angeles"
+    
+    '''
+results = pd.read_sql_query(q, con)
+results
+
+```
+```{python}
+q =""""SELECT s.*
+                ,p.parkName
+                ,p.parkkey
+    FROM schools AS s
+    JOIN parks AS S
+    JOIN parks AS p On s.city = p.city AND 
+                        s.state = p.state
+    
+    """
+results = pd.read_sql_query(q, con)
+results
+
+```

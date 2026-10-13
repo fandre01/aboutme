@@ -1,0 +1,140 @@
+---
+title: "Client Report -How good is it, really?"
+subtitle: "Unit 4 Task 2"
+author: "[STUDENT NAME]"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+from lets_plot import *
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, classification_report
+
+
+# add the additional libraries you need to import for ML here
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+# import your data here using pandas and the URL
+
+df = pd.read_csv("https://github.com/byuidatascience/data4dwellings/raw/master/data-raw/dwellings_ml/dwellings_ml.csv")
+df.head()
+```
+
+## QUESTION 1
+
+__Describe the quality of your classification model using 2-3 different evaluation metrics.__ You also need to explain how to interpret each of the evaluation metrics you use.  
+
+_I use about 5 different evaluation metrics all their scores at least 0.92 means the model perfom so well.
+
+```{python}
+# Include and execute your code here
+# Create the the model.
+
+df["before1980"] = np.where(df["yrbuilt"] < 1980, 1, 0)
+
+```
+
+```{python}
+#select the feature and Target
+
+y = df["before1980"]
+
+x = df.select_dtypes(include="number").drop(columns=["before1980", "yrbuilt"])
+```
+
+```{python}
+# Split the model
+
+x_train, x_test, y_train, y_test = train_test_split(
+  x,y,test_size=0.2, random_state= 42
+)
+```
+
+```{python}
+# build the model and fit the model
+
+model = RandomForestClassifier(random_state=42)
+model.fit(x_train, y_train)
+
+```
+
+```{python}
+# make prediction
+pred = model.predict(x_test)
+```
+
+```{python}
+# Evaluate the model
+
+acc = accuracy_score(y_test, pred)
+print("Accuracy:", acc)
+
+print("\nprecision_score")
+print(precision_score)
+
+pre = precision_score(y_test, pred)
+print("\nprecision:",pre)
+
+recall = recall_score(y_test, pred)
+print("\nRecall:", recall)
+
+f1 = f1_score(y_test, pred)
+print("F1_Score:", f1)
+
+ar = roc_auc_score(y_test, pred)
+print("Area:", ar)
+
+print("\nClassification Report")
+print(classification_report(y_test, pred))
+```
+
+
+## QUESTION 2
+
+__Justify your classification model by discussing the most important features selected by your model.__ This discussion should include a feature importance chart and a description of the features.
+
+_type your write-up and analysis here_
+
+```{python}
+importances = pd.DataFrame({
+  "feature": x_train.columns,
+  "importance": model.feature_importances_
+}).sort_values(by='importance', ascending=False)
+
+top15 = importances.head(15).iloc[::-1]
+(
+  ggplot(top15, aes(x="importance", y = "feature")) +\
+  geom_bar(stat="identity", size= 0.3) 
+ + ggtitle( "The 15 most important")
+  
+)
+```
+
+

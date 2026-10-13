@@ -1,0 +1,14 @@
+---
+title: "MATH 425"
+description: "Mathematics and statistics coursework archived from the MATH 425 folder."
+---
+
+## About this coursework
+
+This folder contains the source work found in `Documents/MATH 425`.
+
+## Files
+
+The complete archive is available in the [MATH 425 assignment folder on GitHub](https://github.com/fandre01/aboutme/tree/main/coursework/math-425/assignments).
+
+<!-- Optional follow-up: add short descriptions or screenshots for the strongest MATH 425 assignments. -->

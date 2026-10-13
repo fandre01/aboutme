@@ -1,0 +1,234 @@
+---
+title: "Data Exploration: Coffee Quality Ratings"
+subtitle: "What makes a coffee score higher?"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    embed-resources: true
+    toc: true
+    toc-depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Overview
+
+**My Question:** What things about a coffee (where it comes from, how it's processed, how it tastes) are connected to a higher quality score?
+
+Coffee is scored from 0 to 100 by trained tasters called Q-graders. I want to see if things like the country the coffee comes from or the way it was processed affect that score.
+
+---
+
+## Data Sources I Looked At
+
+I found five free datasets. Here is what I thought about each one.
+
+| # | Source | Format | My Notes |
+|---|--------|--------|----------|
+
+1: Coffee Quality Institute (TidyTuesday) – This is the one I picked. It has 1,341 coffee reviews and I can load it straight from the internet      without downloading anything.
+2: Our World in Data – Life Expectancy – Very clean and easy to use, but I already used this dataset on a previous project so I did not want to   use it again.
+3: Gapminder (R package) – Simple dataset that is already in R. Good for practicing but does not have enough variables.
+
+4: US Bureau of Labor Statistics – Unemployment – Good data but I had to download a messy Excel file to use it.
+
+5: World Bank (WDI package) – Has a lot of information but takes a long time to load.
+
+**I picked dataset #1 (Coffee Quality Institute)** because:
+- I can read it straight from the internet, no downloading needed
+- It has detailed taste scores (aroma, flavor, acidity, etc.)
+- It has the country each coffee comes from
+- It has enough rows to explore
+
+---
+
+## Loading the Data
+
+```{r libraries}
+library(tidyverse)
+library(ggplot2)
+library(scales)
+library(plotly)
+```
+
+```{r import}
+url <- "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-07-07/coffee_ratings.csv"
+
+coffee_raw <- read_csv(url)
+```
+
+```{r first-look}
+glimpse(coffee_raw)
+```
+
+```{r dimensions}
+cat("Rows:", nrow(coffee_raw), "\nColumns:", ncol(coffee_raw))
+```
+```{r}
+#view(coffee_raw)
+```
+
+---
+
+## Checking Data Quality
+
+### Check 1: What data is missing?
+
+```{r missing-values}
+p = (
+  coffee_raw %>%
+  summarise(across(everything(), ~ mean(is.na(.)) * 100)) %>%
+  pivot_longer(everything(), names_to = "column", values_to = "pct") %>%
+  filter(pct > 0) %>%
+  ggplot(aes(x = reorder(column, pct), y = pct)) +
+  geom_col(fill = "#6B4226") +
+  coord_flip() +
+  labs(title = "Missing Data by Column", x = NULL, y = "% Missing") +
+  theme_minimal()
+)
+```
+
+Some columns like lot_number and farm_name are missing a lot. But the taste scores and total score are almost all there, so the main variables I need are fine.
+
+### Check 2: What do the scores look like?
+
+```{r score-distribution}
+med <- median(coffee_raw$total_cup_points, na.rm = TRUE)
+
+ggplot(coffee_raw, aes(x = total_cup_points)) +
+  geom_histogram(bins = 40, fill = "#A0522D", color = "white") +
+  geom_vline(xintercept = med, color = "gold", linetype = "dashed", size = 2) +
+  labs(
+    title = "Distribution of Coffee Scores",
+    subtitle = paste("Median:", med),
+    x = "Total Score (0-100)",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+Most scores are between 80 and 87. There are a few scores far below 80 which are probably mistakes, so I will remove them when I clean the data.
+
+### Check 3: How many coffees come from each country?
+
+```{r country-counts}
+coffee_raw %>%
+  count(country_of_origin, sort = TRUE) %>%
+  slice_head(n = 15) %>%
+  ggplot(aes(x = reorder(country_of_origin, n), y = n)) +
+  geom_col(fill = "#4E2B0E") +
+  coord_flip() +
+  labs(
+    title = "Top 15 Countries in the Dataset",
+    x = NULL,
+    y = "Number of Coffees"
+  ) +
+  theme_minimal()
+```
+
+Mexico, Colombia, Guatemala, and Brazil have the most coffees. Some countries only have a few, so I need to be careful when comparing countries.
+
+---
+
+## Cleaning the Data
+
+```{r clean}
+coffee <- coffee_raw %>%
+  filter(total_cup_points > 50) %>%
+  filter(!is.na(country_of_origin)) %>%
+  mutate(
+    species = str_to_title(species),
+    processing_method = fct_lump_n(processing_method, n = 4),
+    country_of_origin = str_trim(country_of_origin)
+  )
+
+cat("Rows after cleaning:", nrow(coffee))
+```
+
+---
+
+## Exploring the Data
+
+### Do the taste scores connect to the total score?
+
+```{r subscores-correlation}
+sub_scores <- coffee %>%
+  select(total_cup_points, aroma, flavor, aftertaste, acidity,
+         body, balance, uniformity, clean_cup, sweetness, cupper_points) %>%
+  pivot_longer(-total_cup_points, names_to = "attribute", values_to = "score")
+
+ggplot(sub_scores, aes(x = score, y = total_cup_points)) +
+  geom_point(alpha = 0.15, color = "#6B4226", size = 0.8) +
+  geom_smooth(method = "lm", se = FALSE, color = "gold", linewidth = 0.8) +
+  facet_wrap(~attribute, scales = "free_x") +
+  labs(
+    title = "Each Taste Score vs. Total Score",
+    x = "Score",
+    y = "Total Score"
+  ) +
+  theme_minimal(base_size = 10)
+```
+
+Flavor, aftertaste, aroma, and cupper_points go up with the total score the most. Sweetness, uniformity, and clean_cup are almost always high, so they don't change much between coffees.
+
+### Does the country affect the score?
+
+```{r score-by-country}
+coffee %>%
+  group_by(country_of_origin) %>%
+  summarise(mean_score = mean(total_cup_points), n = n(),
+            se = sd(total_cup_points) / sqrt(n)) %>%
+  filter(n >= 20) %>%
+  ggplot(aes(x = reorder(country_of_origin, mean_score), y = mean_score)) +
+  geom_col(fill = "#A0522D") +
+  geom_errorbar(aes(ymin = mean_score - se, ymax = mean_score + se),
+                width = 0.3, color = "gray30") +
+  coord_flip() +
+  labs(
+    title = "Average Score by Country",
+    subtitle = "Only countries with 20+ coffees | Error bars = ±1 SE",
+    x = NULL, y = "Average Score"
+  ) +
+  theme_minimal()
+```
+
+
+All countries score close to each other, around 82 to 84. Ethiopia is slightly the highest and Nicaragua the lowest, but the difference is small. This means where the coffee comes from may not matter as much as I expected.
+
+
+
+### Does the processing method matter?
+
+```{r score-by-processing}
+coffee %>%
+  filter(!is.na(processing_method)) %>%
+  ggplot(aes(x = reorder(processing_method, total_cup_points, median),
+             y = total_cup_points)) +
+  geom_boxplot(fill = "#A0522D", alpha = 0.7) +
+  coord_flip() +
+  labs(title = "Scores by Processing Method", x = NULL, y = "Total Score") +
+  theme_minimal()
+```
+
+
+All four processing methods score around the same. Natural / Dry is slightly higher and has more spread. The 'Other' group is too small to say much about.
+
+
+## Limitations
+
+- This data only has coffees that were sent in for professional review, so really bad coffees are not here. The scores don't show the full range.
+- Some countries only have a few coffees, so the averages for those countries may not be accurate.
+- Altitude is missing for many rows, so I can't use it much in analysis.
+- It's hard to compare years because the harvest year column is not consistent.
+
+
+
+## Other Questions I Could Look At
+
+- Does higher altitude mean better scores?
+- Is Arabica always scored higher than Robusta?
+- Can I predict the total score just from the taste scores?
+- Are there groups of coffees that taste similar to each other?

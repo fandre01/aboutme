@@ -1,0 +1,175 @@
+---
+title: "Stock Performance Tracking Competition"
+author: "Fabrice André"
+date: "2026-06-14"
+format: 
+  html:
+    toc: true
+    theme: cosmo
+    code-fold: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(tidyquant)
+library(scales)
+```
+
+
+```{r}
+# Define the stock symbols for the competition
+my_stocks <- c("AAPL", "GOOGL", "AMZN")
+friend_stocks <- c("META", "TSLA", "NVDA")
+
+all_stocks<- c(my_stocks, friend_stocks)
+```
+
+
+
+```{r}
+library(tidyverse)
+library(quantmod)
+
+symbols <- c("AAPL","GOOGL","AMZN","META","TSLA","NVDA")
+
+raw_data <- purrr::map_dfr(symbols, function(sym){
+
+  stock <- getSymbols(
+    sym,
+    src = "yahoo",
+    from = "2025-10-01",
+    auto.assign = FALSE
+  )
+
+  tibble(
+    date = index(stock),
+    symbol = sym,
+    close = as.numeric(Ad(stock))
+  )
+})
+
+class(raw_data)
+head(raw_data)
+```
+
+
+```{r}
+stock_returns <- raw_data %>%
+  group_by(symbol) %>%
+  arrange(date, .by_group = TRUE) %>%
+  mutate(
+    daily_return = (close - lag(close)) / lag(close)
+  ) %>%
+  ungroup()
+```
+
+```{r}
+class(raw_data)
+```
+```{r}
+stock_returns <- raw_data %>%
+  group_by(symbol) %>%
+  arrange(date, .by_group = TRUE) %>%
+  mutate(
+    daily_return = (close - lag(close)) / lag(close)
+  ) %>%
+  ungroup()
+
+head(stock_returns)
+```
+
+```{r}
+# Calculate cumulative returns
+initial_prices <- raw_data %>%
+  group_by(symbol) %>%
+  slice_min(date, n = 1) %>%
+  select(symbol, initial_price = close) %>%
+  mutate(shares = 1000 / initial_price)
+
+initial_prices
+```
+
+```{r}
+portfolio_data <- raw_data %>%
+  left_join(initial_prices, by = "symbol") %>%
+  mutate(
+    value = shares * close,
+    investor = case_when(
+      symbol %in% c("AAPL", "GOOGL", "AMZN") ~ "Fabrice",
+      TRUE ~ "Friend"
+    )
+  )
+```
+
+```{r}
+portfolio_values <- portfolio_data %>%
+  group_by(date, investor) %>%
+  summarize(
+    total_value = sum(value),
+    .groups = "drop"
+  )
+
+head(portfolio_values)
+```
+
+
+
+```{r}
+ggplot(portfolio_values,
+       aes(x = date,
+           y = total_value,
+           color = investor)) +
+  geom_line(size = 1.2) +
+  labs(
+    title = "Stock Portfolio Competition",
+    subtitle = "Starting with $1,000 in each stock",
+    x = "Date",
+    y = "Portfolio Value ($)",
+    color = "Investor"
+  ) +
+  scale_y_continuous(labels = dollar) +
+  theme_minimal()
+```
+
+
+```{r}
+stock_gains <- portfolio_data %>%
+  group_by(symbol, investor) %>%
+  summarize(
+    gain = last(value) - first(value),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(gain))
+
+stock_gains
+```
+
+
+```{r}
+ggplot(stock_gains,
+       aes(x = reorder(symbol, gain),
+           y = gain,
+           fill = investor)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Contribution of Each Stock",
+    x = "Stock",
+    y = "Gain ($)"
+  ) +
+  scale_y_continuous(labels = dollar) +
+  theme_minimal()
+```
+
+## Summary
+
+For this competition, I selected Apple (AAPL), Alphabet (GOOGL), and Amazon (AMZN), while my friend selected Meta (META), Tesla (TSLA), and Nvidia (NVDA). Each stock received an initial investment of approximately $1,000 at the beginning of October 2025. The first visualization tracks the total value of each portfolio over time, allowing us to compare performance throughout the competition period.
+
+The results show that the winning portfolio benefited primarily from strong performance in one or more individual stocks. The second visualization highlights the contribution of each stock to overall gains, making it easy to identify which investment had the greatest impact on the final outcome. Together, these visualizations provide both a portfolio-level view of the competition and a stock-level explanation of the results.
+
+
+

@@ -1,0 +1,92 @@
+---
+title: "Week 5: Polish a Previous Visualization"
+author: Fabrice Andre
+format:
+  html:
+    keep-md: true
+    toc: true
+    toc-float: true
+    code-fold: show
+    fig-height: 6
+    fig-width: 12
+    fig-align: center
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+library(tidyverse)
+library(mosaic)
+library(readr)
+library(readxl)
+library(plotly)
+library(haven)
+library(foreign)
+```
+
+```{r}
+df <- unzip("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w05/child-mortality.zip", exdir = "C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w05/child-mortality" )
+df
+```
+
+```{r}
+df1 <- read.csv("C:/Users/andre/OneDrive/Documents/DS350_SP2026/DS350_S26_Andre_Fabr/w05/child-mortality/child-mortality.csv")
+df1
+```
+```{r}
+is.na(df1)
+```
+
+
+
+
+```{r}
+df2 <- df1 %>%
+  filter(Year >= 1933, Year <= 2023)%>%
+  filter(!is.na(`Under.five.mortality.rate..selected.`), !is.na(Entity))
+  
+  
+```
+
+```{r}
+ui <- fluidPage(
+  titlePanel("Global Mortality Trends"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(
+        inputId = "selected_countries",
+        label = "Select Country/Entity:",
+        choices = sort(unique(df2$Entity)), # Updated to use df2
+        selected = c("Afghanistan", "France", "United States"), 
+        multiple = TRUE
+      ),
+      helpText("You can select multiple countries to compare their trajectories.")
+    ),
+    mainPanel(
+      plotOutput(outputId = "mortality_plot") # This displays the plot
+    )
+  )
+)
+```
+
+
+
+```{r}
+# 3. Shiny Server
+server <- function(input, output) {
+  
+  output$mortality_plot <- renderPlot({
+    # Filter df2 based on the user's sidebar selection
+    filtered_data <- df2 %>% 
+      filter(Entity %in% input$selected_countries)
+    # Build the ggplot using the reactive filtered data
+    ggplot(filtered_data, aes(x = Year, y = `Under.five.mortality.rate..selected.`, color = Entity, group = Entity)) +
+      geom_line() +
+      geom_point() + # Optional: adds points to the lines
+      theme_minimal() +
+      labs(y = "Under-five Mortality Rate", x = "Year")
+  })
+}
+shinyApp(ui = ui, server = server)
+```

@@ -1,0 +1,108 @@
+---
+title: "Client Report - Star Wars for Dummies"
+subtitle: "Unit 5 Task 3"
+author: "Fabrice"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+from lets_plot import *
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_curve, auc
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+```{python}
+# import your data here using pandas and the URL
+df = pd.read_csv("https://raw.githubusercontent.com/byuidatascience/data4names/master/data-raw/names_year/names_year.csv")
+
+df.head()
+
+```
+
+
+```{python}
+peter_long = (
+    df[df['name'] == 'Peter'][['year', 'UT', 'OR']]
+    .melt(
+        id_vars='year',
+        value_vars=['UT', 'OR'],
+        var_name='state',
+        value_name='count'
+    )
+)
+
+from lets_plot import element_line
+
+p = (
+    ggplot(peter_long, aes(x='year', y='count', color='state'))
+    + geom_line(size=1.2)
+    + geom_vline(xintercept=1936, color = "black")
+    + geom_vline(xintercept=1972, color = "black")
+    + geom_vline(xintercept=2005, color = "black")
+    + scale_x_continuous(limits=[1910, 2020], format="d")
+    + labs(
+        title='The history of Peter for Utah(red) and Oregon(orange)',
+        x='Year name given',
+        y='Count of Peter'
+    )
+    + scale_color_manual(
+        values={'UT': 'red', 'OR': 'orange'},
+        name='State'
+    )
+    + theme_minimal()
+    + theme(
+        axis_line_x=element_line(color='black', size=1),
+        axis_line_y=element_line(color='black', size=1)
+    )
+        # Label box
+    + geom_text(
+        x=1931,
+        y=50,
+        label='1936',
+       color = "black"
+       
+    )
+    + geom_text(
+        x=1967,
+        y=85,
+        label='1972',
+       color = "black"
+       
+    )
+    + geom_text(
+        x=2000,
+        y=76,
+        label='2005',
+       color = "black"
+       
+    )
+)
+
+p
+
+```

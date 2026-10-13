@@ -1,0 +1,201 @@
+---
+title: "Client Report - Exploring Names"
+subtitle: "Unit 1 Task 1"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd
+import numpy as np
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+```{python}
+# Learn morea about Code Cells: https://quarto.org/docs/reference/cells/cells-jupyter.html
+
+# Include and execute your code here
+df = pd.read_csv("https://github.com/byuidatascience/data4names/raw/master/data-raw/names_year/names_year.csv")
+df.head()
+```
+
+## QUESTION 1
+
+
+__What was the earliest year that the name ‘Felisha’ was used?__
+
+The earliest year that the name “Felisha” was used in the dataset is 1964. This indicates that the name started appearing in the U.S. birth records from that year onward. By examining the dataset, we can see that the name gained popularity gradually after its first recorded use.
+
+```{python}
+# Q1
+felisha = df.loc[df['name']=='Felisha']
+#felisha = df.query('name== "Felisha"')
+
+(
+    ggplot(felisha, aes(x='year', y='Total'))
+    + geom_line(color='blue')
+    + ggtitle(f"Popularity of Felisha")
+    + scale_x_continuous(limits=[1950,2020], format='d')
+    + geom_rect(xmin = 1964, ymin = 0, xmax = 2007, ymax = 250, color = 'blue', fill = 'blue', alpha = .2)
+    + geom_text(x=1985, y=150, label = 'Era of Felisha', size= 7, color='red')
+    + geom_vline(xintercept=1964, color='red', linetype='dashed', size = 2)
+    
+)
+
+
+```
+
+
+## QUESTION 2
+
+__What year had the most babies named 'David'? How many babies were named 'David' that year?__
+
+The year with the most babies named “David” was 1955, with a total of 64754.6 babies given that name. This graph shows that the name David was especially popular during that year, reflecting naming trends in the U.S. at the time. By examining the dataset, we can see how its popularity changed over the years.
+
+```{python}
+# Q2
+# Filter for David and group by year
+david = (
+    df.query('name == "David"')
+      .groupby('year', as_index=False)['Total']
+      .sum()
+      
+)
+# Get max year and value
+year_max = david.loc[david['Total'].idxmax(), 'year']
+max_count = david['Total'].max()
+
+# Plot
+(
+    ggplot(david, aes(x='year', y='Total'))
+    + geom_line(color='blue')
+    + ggtitle("Most babies named 'David'")
+    + scale_x_continuous(limits=[1950, 2020], format='d')
+    + geom_vline(xintercept=year_max, color='red', linetype='dashed', size=2)
+    + geom_text(x=1967, y= 60000, label= "Babies named David", size=7, color='red')
+)
+```
+
+
+
+## QUESTION 3
+
+__What year did your name hit its peak? How many babies were named your name in that year?__
+
+My name, “Andre”, reached its peak popularity in 1971, with 2403 babies given that name. This graph shows that my name was most commonly used in that year compared to all other years. Examining the dataset also reveals how the popularity of my name changed over time, reflecting naming trends.
+   
+```{python}
+#Q3
+my_count = (
+    df.query('name == "Andre"')
+              .groupby('year',as_index=False)['Total']
+              .sum()
+)
+
+peak_year = my_count.loc[my_count['Total'].idxmax(), 'year']
+
+(
+
+    ggplot(my_count, aes(x= 'year', y='Total'))
+    + geom_line(color='blue')
+    + ggtitle("My name reached its peak popularity.")
+    + scale_x_continuous(limits=[1950, 2020], format='d')
+    + geom_vline(xintercept=1971, color='red', linetype='dashed', size=2)
+    + geom_text(x=1981, y= 2500, label= "Babies named Andre", size=7, color= 'red')
+)
+
+```
+
+
+
+## QUESTION 4
+
+__How many babies are named ‘Oliver’ in the state of Utah for all years?__  
+
+A total of 280 babies were named Oliver in the state of Utah across all years in the dataset. This shows how popular the name Oliver has been in Utah over time.
+
+```{python}
+# Q4
+oliver_utah = (
+    df.query('name == "Oliver"')
+      .groupby('year', as_index=False)['UT']
+      .sum()
+)
+
+total_oliver_utah = oliver_utah['UT'].sum()
+print("Total babies named Oliver in Utah across all years:", total_oliver_utah)
+
+(
+  ggplot(oliver_utah, aes(x='year', y='UT'))
+  + geom_line(color='blue')
+  + ggtitle(f"Babies named Oliver in Utah (Total = {total_oliver_utah})")
+  + scale_x_continuous(limits=[1950, 2020], format='d')
+  #+ geom_vline(xintercept=2015, color='red', linetype='dashed', size=2)
+)
+
+```
+
+
+
+## QUESTION 5
+
+__In the most recent year, what was the most common female name in Utah?__ 
+
+In the most recent year, William was the most common female name in Utah. This indicates that among girls born in Utah that year, this name was chosen more frequently than any other.
+
+```{python}
+
+# Most recent year
+latest_year = df['year'].max()
+
+# Filter dataset to that year
+recent_df = df.query('year == @latest_year')
+
+# Find the most common name in Utah
+most_common = recent_df.loc[recent_df['UT'].idxmax(), ['name', 'UT']]
+
+#  Plot the trend of the most common name in Utah
+name_trend = df.query('name == @most_common["name"]')
+
+(
+    ggplot(name_trend, aes(x='year', y='UT'))
+    + geom_line(color='blue')
+    + scale_x_continuous(limits=[1950, 2020], format='d')
+    #+ geom_vline(xintercept=2015, color='red', linetype='dashed', size=2)
+    +geom_text(x=2019, y=300, label="William", )
+    + geom_vline(xintercept=2015, color='red', linetype='dashed')
+)
+
+
+
+
+
+
+```
+
+```{python}
+df.columns()
+```
+---

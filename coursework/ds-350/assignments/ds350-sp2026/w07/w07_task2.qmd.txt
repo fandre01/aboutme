@@ -1,0 +1,140 @@
+---
+title: "Stock Performance Tracking Competition"
+author: "Fabrice André"
+date: "2026-06-14"
+format: 
+  html:
+    toc: true
+    toc-float: true
+    code-fold: true
+    fig-height: 6
+    fig-width: 12
+    fig-align: center
+---
+
+```{r}
+#| include: false
+knitr::opts_knit$set(root.dir = here::here())
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+#Load the necessary libraries
+library(tidyverse)
+library(quantmod)
+library(tidyquant)
+library(scales)
+library(plotly)
+```
+
+
+
+
+```{r}
+#Decide the three stocks that your friend picks and the three that you pick.
+# Let's choose the stock we want to track.
+
+my_stocks <- c("AAPL", "AMZN", "TSLA") 
+
+friend_stocks <- c("NVDA", "META", "GOOGL") 
+ 
+# Add my stocks and my friend's stocks together
+
+all_stocks <- c(my_stocks, friend_stocks)
+
+```
+
+
+```{r}
+# Pull the price performance data of those 6 stocks using library(tidyquant)
+price_data <- tq_get(all_stocks,
+                     get = 'stock.prices',
+                     from = "2025-10-01",
+                     to = "2026-06-18")
+```
+
+
+```{r}
+# Calculate daily log returns for all 6 stocks
+
+return_data <- price_data %>%
+  group_by(symbol) %>%
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = 'daily',
+               type = 'log')
+
+```
+
+```{r}
+# Define equal weights for each portfolio 
+my_weights <- tibble(asset.names = my_stocks, weight = rep(1/3, 3))
+
+friend_weights <- tibble(asset.names = friend_stocks, weight = rep(1/3, 3))
+```
+
+```{r}
+# Build each portfolio with wealth index
+
+my_portfolio <- return_data %>%
+  filter(symbol %in% my_stocks) %>%
+  tq_portfolio(assets_col =  symbol,
+               returns_col = daily.returns,
+               weights = my_weights,
+               wealth.index = TRUE) %>%
+  mutate(owner = "Fabrice")
+
+
+
+friend_portfolio <- return_data %>%
+  filter(symbol %in% friend_stocks) %>%
+  tq_portfolio(assets_col = symbol,
+               returns_col = daily.returns,
+               weights = friend_weights,
+               wealth.index = TRUE) %>%
+  mutate(owner = "Friend")
+```
+
+
+```{r}
+#combine both portfolios
+combined <- bind_rows(my_portfolio, friend_portfolio)
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+# Plot who is winning each day
+p = ggplot(combined, aes(x = date, y = portfolio.wealthindex, color = owner)) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = dollar_format()) +
+  labs(title = "Portfolio Competition: Me vs Friend",
+       x = "Date", y = "Growth of $1 (Wealth Index)",
+       color = "Investor") +
+  theme_minimal()
+ggplotly(p)
+```
+
+
+
+```{r}
+# Calculate cumulative return for each stock
+stock_growth <- return_data %>%
+  group_by(symbol) %>%
+  mutate(wealth_index = cumprod(1 + daily.returns)) %>%
+  mutate(owner = ifelse(symbol %in% my_stocks, "Fabrice", "Friend"))
+
+# Plot individual stock performance
+ggplot(stock_growth, aes(x = date, y = wealth_index, color = symbol, linetype = owner)) +
+  geom_line(size = 1) +
+  scale_y_continuous(labels = dollar_format()) +
+  labs(title = "Individual Stock Performance: Which Stock Is Helping?",
+       x = "Date", y = "Growth of $1",
+       color = "Stock", linetype = "Investor") +
+  theme_minimal()
+```
+#### Summary:
+
+The first chart compares the overall portfolio wealth index of both investors from October 2025 through June 2026, starting each portfolio at $1.00. The Friend's portfolio (teal) stayed ahead of me (Fabrice's) (pink) for most of the competition, with both portfolios dipping below $1.00 around April before recovering. A wealth index was chosen because it normalizes the starting point and makes it easy to see who is winning on any given day.
+
+The second chart breaks down all six stocks individually, using solid lines for my (Fabrice's) stocks and dashed lines for the Friend's stocks. It is clear that GOOGL (green dashed) is the stock driving the Friend's advantage, as it climbed as high as $1.60 before settling around $1.45 by June. my (Fabrice's) stocks, particularly TSLA (pink), struggled significantly, dropping below $0.80 at points. This stock-level view explains the gap seen in the first chart and identifies GOOGL as the key winner of the competition.
+

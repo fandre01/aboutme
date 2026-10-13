@@ -1,0 +1,192 @@
+---
+title: "Client Report -How good is it, really?"
+subtitle: "Unit 4 Task 2"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+from lets_plot import *
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.metrics import (
+  accuracy_score,
+  precision_score,
+  recall_score,
+  f1_score,
+  roc_auc_score,
+  confusion_matrix,
+  classification_report
+
+)
+
+# add the additional libraries you need to import for ML here
+
+# Plan for this assignment
+# 1-create the binary target before_1980
+# 2-create the binary target before_1980
+# 3-  Train-test split
+# 4- Train Random forest
+
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+# import your data here using pandas and the URL
+# Load the data here
+df = pd.read_csv("https://raw.githubusercontent.com/byuidatascience/data4dwellings/master/data-raw/dwellings_ml/dwellings_ml.csv")
+
+#quick look
+df.head()
+df.info()
+```
+
+
+
+
+## QUESTION 1
+
+__Describe the quality of your classification model using 2-3 different evaluation metrics.__ You also need to explain how to interpret each of the evaluation metrics you use. 
+
+_I evaluated the classifier using Accuracy, Precision, Recall, F1-score, and ROC AUC.
+
+Accuracy tells me overall how often the model is correct on the test set.
+
+Precision (for “before 1980”) indicates the fraction of houses predicted as old that really are old — useful when false alarms are costly.
+
+Recall indicates the fraction of actual old houses the model successfully found — useful when missing old houses is costly.
+
+F1 score balances precision and recall.
+
+ROC AUC measures the model’s overall ability to separate old vs. newer houses using predicted probabilities, independent of the classification threshold.
+The confusion matrix shows the exact counts of TP, TN, FP, and FN, letting us see which error type dominates and informing how to adjust the model based on the project objective_
+
+```{python}
+# create the binary target before_1980
+
+df["before1980"] = np.where(df["yrbuilt"] < 1980, 1, 0)
+
+print("Value counts for target (1=before 1980)")
+print(df["before1980"].value_counts())
+```
+
+
+```{python}
+# select the features (X) and target (Y)
+# use only numeric features(drop the yrbuild and the new target)
+x = df.select_dtypes(include="number").drop(columns=["yrbuilt", "before1980"])
+y = df["before1980"]
+# check for missing value and fill with column mean if needed
+print("Missing values per column in X: ")
+print(x.isna().sum())
+
+# If there are missing values, impute with column mean 
+
+x= x.fillna(x.mean())
+
+```
+
+```{python}
+# Train-test split
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20, random_state=42)
+
+print("Train shape:", x_train.shape, "Test shape:", x_test.shape)
+```
+
+```{python}
+# Train Random Forest classifier
+model = RandomForestClassifier(n_estimators=300, random_state=42)
+model.fit(x_train, y_train)
+
+```
+
+```{python}
+# predictions & probabilities
+y_pred = model.predict(x_test)
+# predicted probability for positive class (before_1980 = 1)
+y_proba = model.predict_proba(x_test)[:, 1]
+
+```
+
+```{python}
+# evaluation metrics
+acc = accuracy_score(y_test, y_pred)
+prec = precision_score(y_test, y_pred, zero_division=0)
+rec = recall_score(y_test, y_pred, zero_division=0)
+f1 = f1_score(y_test, y_pred, zero_division=0)
+roc = roc_auc_score(y_test, y_proba)
+cm = confusion_matrix(y_test, y_pred)
+
+print(f"Accuracy: {acc:.4f}")
+print(f"Precision: {prec:.4f}")
+print(f"Recall: {rec:.4f}")
+print(f"F1 score: {f1:.4f}")
+print(f"ROC AUC: {roc:.4f}")
+
+print("\nClassification report (detailed):")
+print(classification_report(y_test, y_pred, zero_division=0))
+
+print("Confusion matrix (rows = true, cols = predicted):")
+print(cm)
+```
+
+## QUESTION 2
+
+__Justify your classification model by discussing the most important features selected by your model.__ This discussion should include a feature importance chart and a description of the features.
+
+_The Random Forest model identifies several features that strongly influence whether a house was built before 1980.
+According to the feature importance chart, the top predictors include building_area, lot_size, num_bedrooms, and num_bathrooms (exact features may vary).
+
+These results make sense: older houses tend to differ in size, design, and layout compared to newer ones. For example, building area and lot size reflect how construction trends have changed over time — newer houses often have larger living areas but smaller lots. The number of bedrooms and bathrooms can also indicate design preferences from different eras.
+
+The feature importance chart confirms that the model relies on logical, interpretable features rather than random noise, supporting its validity as a classification model._
+
+```{python}
+# Include and execute your code here
+
+feat_importances = pd.DataFrame({
+    "feature": x_train.columns,
+    "importance": model.feature_importances_
+}).sort_values("importance", ascending=False).reset_index(drop=True)
+
+display(feat_importances.head(20))  # show top 20
+
+# Plotting with lets_plot - horizontal bar chart of top 15 features
+topn = 15
+df_plot = feat_importances.head(topn).copy()
+# reverse order for nicer horizontal bars
+df_plot = df_plot.iloc[::-1]
+
+p = (
+    ggplot(df_plot, aes(x='importance', y='feature'))
+    + geom_bar(stat='identity')
+    + ggtitle(f"Top {topn} Feature Importances")
+)
+p
+```
+

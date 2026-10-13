@@ -1,0 +1,107 @@
+---
+title: "Client Report - Show me!"
+subtitle: "Unit 4 Task 3"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+from lets_plot import *
+# add the additional libraries you need to import for ML here
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+# import your data here using pandas and the URL
+
+
+df= pd.read_csv("https://github.com/byuidatascience/data4dwellings/raw/master/data-raw/dwellings_ml/dwellings_ml.csv")
+df.tail()
+```
+
+
+## QUESTION 1
+
+__Create 2-3 charts that evaluate the relationships between each of the top 2 or 3 most important variables (as found in Unit 4 Task 2) and the year the home was built.__ Describe what you learn from the charts about how that variable is related to year built.   
+
+_1. Live Area vs. Year Built
+The first chart shows that newer homes tend to have larger living areas. Homes built before 1940 generally have much smaller square footage, while homes built after 1960 show a strong upward trend. This suggests that over time, homebuyers and builders began favoring larger homes, possibly because of growing families and higher living standards.
+
+_2. One-Story Architecture vs. Year Built
+The second chart indicates that the likelihood of a home being one-story changes over the years. Older homes show more variation, but around the mid-1900s the trend becomes more stable. This likely reflects changes in architectural preferences—certain periods favored one-story ranch-style homes, while others saw more two-story builds.
+
+_3. Number of Bathrooms vs. Year Built
+The third chart shows a clear increase in the number of bathrooms in newer homes. Early homes often had only one bathroom, but the number grows steadily with each decade. This matches historical changes in home design as indoor plumbing improved and modern buyers expected multiple bathrooms as a standard feature._
+
+```{python}
+#live area  vs year built
+p1= (
+    ggplot(df, aes(x='yrbuilt', y='livearea')) +
+    geom_smooth(method="loess",color="red",span=0.3)
+    + scale_x_continuous(limits=[1880,2000], format="d")
+  
+    
+)
+p1
+
+```
+
+```{python}
+#One-story Architecture vs Year Built
+p2= (
+    ggplot(df, aes(x='yrbuilt', y='arcstyle_ONE-STORY')) +
+    geom_smooth(method="loess",color="red",span=0.3)
+    + scale_x_continuous(limits=[1880,2000], format="d")
+)
+p2
+```
+
+```{python}
+p3= (
+    ggplot(df, aes(x='yrbuilt', y='numbaths')) +
+    geom_smooth(method="loess",color="red",span=0.3)
+    + scale_x_continuous(limits=[1880,2000], format="d")
+)
+p3
+```
+
+
+## QUESTION 2
+
+__Create at least one other chart to examine a variable(s) you thought might be important but apparently was not. The chart should show its relationship to the year built.__ Describe what you learn from the chart about how that variable is related to year built. Explain why you think it was not (very) important in the model.
+
+_The chart shows that Condition_Excel does not change much with year built. Homes from any year can be in excellent condition, depending on maintenance and renovations, not age. Because the trend is flat and unpredictable, this variable does not strongly relate to year built, which explains why the model did not treat it as important._
+
+```{python}
+# Include and execute your code here
+p4= (
+  ggplot(df, aes(x="yrbuilt", y='condition_Excel')) +
+  geom_smooth(method="loess", color='red', span=0.3)
+  + scale_x_continuous(limits=[1880,2000], format='d')
+)
+p4
+```

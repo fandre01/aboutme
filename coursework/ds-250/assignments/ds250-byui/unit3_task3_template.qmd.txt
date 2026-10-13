@@ -1,0 +1,72 @@
+---
+title: "Client Report - If not now, when?"
+subtitle: "Unit 3 Task 3"
+author: "Fabrice Andre"
+format:
+  html:
+    self-contained: true
+    page-layout: full
+    title-block-banner: true
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    number-sections: false
+    html-math-method: katex
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-copy: hover
+    code-tools:
+        source: false
+        toggle: true
+        caption: See code
+execute: 
+  warning: false
+    
+---
+
+```{python}
+import pandas as pd 
+import numpy as np
+import sqlite3
+from lets_plot import *
+
+LetsPlot.setup_html(isolated_frame=True)
+```
+
+
+```{python}
+# Learn morea about Code Cells: https://quarto.org/docs/reference/cells/cells-jupyter.html
+
+# Include and execute your code here
+df = pd.read_json("https://github.com/byuidatascience/data4missing/raw/master/data-raw/flights_missing/flights_missing.json")
+df
+```
+
+
+
+## QUESTION 1
+
+__What is the best month to fly if you want to avoid delays of any length?__ Describe the metric you chose and why you chose it to calculate your answer. Include one chart to help support your answer, with the x-axis ordered by month.
+
+_To determine the best month to avoid delays, I calculated the total number of delays for each month and visualized them in a bar chart. This metric shows how many delays occurred in each month.
+
+From the chart, November has the lowest total delays, with November close behind. Based on these raw totals, September is the best month to fly if you want to avoid delays._
+
+```{python}
+# Include and execute your code here
+agg = df.groupby("month").agg(
+  total_delays = ("num_of_delays_total", "sum")
+).reset_index()
+agg
+agg = agg[agg['month']!= 'n/a']
+char = (
+  ggplot(agg, aes(x="month", y= "total_delays", fill="month"))
+  + geom_bar(stat="identity")
+  + geom_rect(xmin= -2, ymin= 0, xmax= 12, ymax= 350000, color = 'blue', fill='blue', alpha= .2) 
+  + geom_text(label= "The best month to avoid delays", x= 2, y = 333000, alpha=.9, size = 8 )
+)
+char
+
+```
+

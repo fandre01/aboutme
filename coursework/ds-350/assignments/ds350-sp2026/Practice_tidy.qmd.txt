@@ -1,0 +1,52 @@
+---
+title: "Reformat"
+---
+
+```{r}
+library(tidyverse)
+library(readr)
+```
+
+
+```{r}
+# Read the file
+Rds_data <- read_rds("https://github.com/byuistats/data/raw/master/Dart_Expert_Dow_6month_anova/Dart_Expert_Dow_6month_anova.RDS")
+Rds_data
+```
+
+```{r}
+# Let's filter the Data for just Variable = DJIA
+
+clean_Rds <- Rds_data %>%
+  filter(variable == "DJIA")
+clean_Rds
+```
+
+
+```{r}
+#contest_period is not tidy, let's fix that.
+df_data <- clean_Rds %>%
+  separate(contest_period, c("month_start", "month_end")) %>%
+  
+  separate(month_end, c("month_end", "year_end"), sep =-4) %>%
+  select(-month_start, -variable) %>%
+  pivot_wider(names_from = year_end, values_from = value) 
+  
+  df_data
+```
+```{r}
+df_data %>%
+  
+  rename(Month = `month_end`) %>%
+  #put month in the right order
+  mutate(Month = factor(Month, levels = month.name)) %>%
+  select(-Dec) %>%
+  
+  arrange(Month) 
+  
+
+```
+
+
+
+

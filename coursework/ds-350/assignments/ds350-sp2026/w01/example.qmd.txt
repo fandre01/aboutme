@@ -1,0 +1,15 @@
+---
+title: "example"
+format: html
+---
+
+
+# Heading example
+
+Some example text
+
+```{r}
+#| caption: "Some example code"
+
+plot(1:20)
+```

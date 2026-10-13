@@ -1,0 +1,13 @@
+---
+title: "Untitled"
+---
+
+```{r}
+Rscript -e "library(car); data(Salaries); table(Salaries$sex[Salaries$rank == 'AsstProf'])"
+```
+
+```{r}
+library(car)
+table(Salaries$rank, Salaries$sex)
+```
+

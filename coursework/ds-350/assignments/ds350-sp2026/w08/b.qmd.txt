@@ -1,0 +1,42 @@
+---
+title: "Jesus"
+format: html
+---
+
+```{r}
+#library(tidyverse)
+```
+
+
+## Quarto
+```{r}
+scrips <- rio::import("https://github.com/beandog/lds-scriptures/raw/master/csv/lds-scriptures.csv")
+```
+
+Count the # of times the word "Jesus" appears in the Book of Mormon and the New Testament.
+
+```{r}
+bomnt <- scrips %>% filter(volume_title %in% c("Book of Mormon", "New Testament"))
+```
+
+```{r}
+bomnt %>%
+  mutate(word_count = str_count(scripture_text, "Jesus")) %>% #counts faith in each verse
+  group_by(volume_title) %>%
+  summarise(total_count = sum(word_count))
+```
+# Function 1
+
+```{r}
+count_words <- function(word_to_count){
+  bomnt %>% 
+    mutate(
+      word_count = str_count(scripture_text, word_to_count) %>% 
+      group_by(volume_title) %>% 
+      summarise(total_count = sum(word_count))
+    )
+}
+
+result <- count_words(word_to_count = "[Ff]aith\\w")
+```
+
